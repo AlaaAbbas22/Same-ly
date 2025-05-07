@@ -95,22 +95,22 @@ export default function TeamDetail() {
         </div>
       </div>
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col lg:flex-row lg:justify-between items-start lg:items-center gap-4 mb-6">
         <h2 className="text-xl font-semibold">Team Members</h2>
-        {!isEditor && !isStudent ? (
-          <Button onClick={handleJoinAsStudent} disabled={isJoining}>
-            {isJoining ? (<><span className="animate-spin mr-2">⏳</span>Joining...</>) : (<><UserCheck className="mr-2 h-4 w-4" />Join as Student</>)}
-          </Button>
-        ) : isEditor && (
-          <div className="flex gap-2">
-            <Button onClick={() => setIsAddMemberOpen(true)}><UserPlus className="mr-2 h-4 w-4" />Add Member</Button>
-            <Button variant="outline"><Settings className="mr-2 h-4 w-4" />Team Settings</Button>
-            <Button variant="default" onClick={() => setIsCreateAssignmentOpen(true)}>Add Assignment</Button>
-          </div>
-        )}
-         <div className="flex gap-2">
-         <Link href={`${params.id}/myassignments`}><Button variant="default">My Assignments</Button></Link>
-         <Link href={`${params.id}/myta`}><Button variant="default">My Students' Assignments</Button></Link>
+        <div className="flex flex-row flex-wrap gap-2 w-full lg:w-auto">
+          {!isEditor && !isStudent ? (
+            <Button onClick={handleJoinAsStudent} disabled={isJoining} className="w-auto">
+              {isJoining ? (<><span className="animate-spin mr-2">⏳</span>Joining...</>) : (<><UserCheck className="mr-2 h-4 w-4" />Join as Student</>)}
+            </Button>
+          ) : isEditor && (
+            <>
+              <Button onClick={() => setIsAddMemberOpen(true)}><UserPlus className="mr-2 h-4 w-4" />Add Member</Button>
+              <Button variant="outline"><Settings className="mr-2 h-4 w-4" />Team Settings</Button>
+              <Button variant="default" onClick={() => setIsCreateAssignmentOpen(true)}>Add Assignment</Button>
+            </>
+          )}
+          <Link href={`${params.id}/myassignments`}><Button variant="default">My Assignments</Button></Link>
+          <Link href={`${params.id}/myta`}><Button variant="default">My Students' Assignments</Button></Link>
         </div>
       </div>
 
