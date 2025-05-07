@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import AssignmentCard from "@/components/AssignmentCard";
+import LoginButton from "@/components/LoginButton";
 
 export default function MyAssignmentsPage() {
   const { data: session, status } = useSession();
@@ -46,9 +47,7 @@ export default function MyAssignmentsPage() {
 
   if (!session) {
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold">Please sign in to view your assignments</h1>
-      </div>
+      <LoginButton />
     );
   }
 

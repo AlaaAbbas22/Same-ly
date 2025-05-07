@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Users } from "lucide-react";
 import Link from 'next/link';
 import CreateTeamDialog from '@/components/teams/CreateTeamDialog';
+import LoginButton from '@/components/LoginButton';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -52,9 +53,7 @@ export default function Dashboard() {
   
   if (!session) {
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold">Please sign in to view your dashboard</h1>
-      </div>
+      <LoginButton />
     );
   }
 
@@ -64,10 +63,15 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold">
           Welcome, {session.user.name}!
         </h1>
-        <Button onClick={() => setIsCreateTeamOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create Team
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsCreateTeamOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create Team
+          </Button>
+          <Button variant="outline" onClick={() => signOut()}>
+            Logout
+          </Button>
+        </div>
       </div>
       
       <Tabs defaultValue="editing" className="w-full">

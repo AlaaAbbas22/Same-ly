@@ -12,6 +12,7 @@ import { UserPlus, Settings, ArrowLeft, UserCheck } from "lucide-react";
 import AddMemberDialog from '@/components/teams/AddMemberDialog';
 import CreateAssignment from '@/components/teams/CreateAssignment';
 import Link from 'next/link';
+import LoginButton from '@/components/LoginButton';
 
 export default function TeamDetail() {
   const { data: session, status } = useSession();
@@ -79,7 +80,7 @@ export default function TeamDetail() {
   };
 
   if (status === 'loading' || isLoading) return (<div className="p-8 flex justify-center"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div></div>);
-  if (!session) return (<div className="p-8"><h1 className="text-2xl font-bold">Please sign in to view team details</h1></div>);
+  if (!session) return (<LoginButton />);
   if (!team) return (<div className="p-8"><h1 className="text-2xl font-bold">Team not found</h1><Button onClick={() => router.push('/dashboard')} className="mt-4"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Button></div>);
 
   const teamMembers = [...team.editors, ...team.students];
@@ -109,7 +110,7 @@ export default function TeamDetail() {
         )}
          <div className="flex gap-2">
          <Link href={`${params.id}/myassignments`}><Button variant="default">My Assignments</Button></Link>
-         {isEditor &&<Link href={`${params.id}/myta`}><Button variant="default">My Students' Assignments</Button></Link>}
+         <Link href={`${params.id}/myta`}><Button variant="default">My Students' Assignments</Button></Link>
         </div>
       </div>
 
