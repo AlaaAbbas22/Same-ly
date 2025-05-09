@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 import surahData from './surah.json';
 
-const resend = new Resend('re_Ca5CxPow_A7fKyeTP4bsUUYnPPRpR4av9');
+const resend = new Resend(process.env.EMAIL);
 
 // Helper function to format surah information
 const formatSurahInfo = (surahObj) => {
