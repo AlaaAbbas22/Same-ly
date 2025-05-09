@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import GradeAssignment from "@/components/GradeAssignment";
 import UpdateAssignment from "@/components/UpdateAssignment";
 import DeleteAssignment from "@/components/DeleteAssignment";
+import Link from "next/link";
 
 export default function AssignmentCard({ 
   assignment, 
@@ -88,15 +90,20 @@ export default function AssignmentCard({
   return (
     <Card key={assignment._id}>
       <CardHeader>
-        <CardTitle>
-          {assignment.start && assignment.end
-            ? <div >
-                From Surah {getSurahName(assignment.start.surah)}: {assignment.start.verse}
-                <br /><br />
-                To Surah {getSurahName(assignment.end.surah)}: {assignment.end.verse}
-              </div>
-            : "Assignment"}
-        </CardTitle>
+        <Link href={isTA 
+          ? `/teams/${teamId}/myta/${assignment._id}` 
+          : `/teams/${teamId}/myassignments/${assignment._id}`} 
+          className="hover:underline">
+          <CardTitle>
+            {assignment.start && assignment.end
+              ? <div >
+                  From Surah {getSurahName(assignment.start.surah)}: {assignment.start.verse}
+                  <br /><br />
+                  To Surah {getSurahName(assignment.end.surah)}: {assignment.end.verse}
+                </div>
+              : "Assignment"}
+          </CardTitle>
+        </Link>
       </CardHeader>
       <CardContent>
         <div className="mb-2 flex items-center">
@@ -153,6 +160,16 @@ export default function AssignmentCard({
         <div className={isTA ? "mb-4" : ""}>
           <strong>End Time:</strong>{" "}
           {assignment.endTime ? new Date(assignment.endTime).toLocaleString() : "-"}
+        </div>
+        
+        <div className="mt-2">
+          <Link href={isTA 
+            ? `/teams/${teamId}/myta/${assignment._id}` 
+            : `/teams/${teamId}/myassignments/${assignment._id}`}>
+            <Button variant="outline" size="sm" className="w-full">
+              View Details
+            </Button>
+          </Link>
         </div>
         
         {/* TA-specific buttons */}

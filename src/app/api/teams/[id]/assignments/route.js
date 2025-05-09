@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth/next';
 import { ObjectId } from 'mongodb';
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import clientPromise from '@/lib/mongodb';
+import { 
+  sendAssignmentCreatedEmail, 
+  sendAssignmentUpdatedEmail, 
+  sendAssignmentGradedEmail, 
+  sendAssignmentDeletedEmail,
+  sendTaAssignmentCreatedEmail,
+  sendTaAssignmentDeletedEmail,
+  sendTaAssignmentUpdatedEmail
+} from '@/lib/email';
 
 export async function POST(request, { params }) {
   try {
@@ -81,6 +90,25 @@ export async function POST(request, { params }) {
         { _id: new ObjectId(ta) },
         { $push: { taAssignments: result.insertedId } }
       );
+    }
+
+    // Get student and creator info for email
+    const student = await db.collection('users').findOne({ _id: new ObjectId(assignedTo) });
+    const creator = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+    // Send email notification to student
+    if (student && student.email) {
+      const assignmentWithId = { ...assignment, _id: result.insertedId };
+      await sendAssignmentCreatedEmail(assignmentWithId, student, team, creator);
+    }
+
+    // Send email notification to TA if assigned
+    if (ta) {
+      const taUser = await db.collection('users').findOne({ _id: new ObjectId(ta) });
+      if (taUser && taUser.email) {
+        const assignmentWithId = { ...assignment, _id: result.insertedId };
+        await sendTaAssignmentCreatedEmail(assignmentWithId, taUser, student, team, creator);
+      }
     }
 
     return NextResponse.json({ success: true, assignmentId: result.insertedId });
@@ -256,6 +284,25 @@ export async function PUT(request, { params }) {
       );
     }
 
+    // Get student and updater info for email
+    const student = await db.collection('users').findOne({ _id: new ObjectId(assignedTo) });
+    const updater = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+    // Send email notification
+    if (student && student.email) {
+      const updatedAssignment = { ...assignment, ...updateData, _id: new ObjectId(assignmentId) };
+      await sendAssignmentUpdatedEmail(updatedAssignment, student, team, updater);
+    }
+    
+    // Send email notification to TA if assigned
+    if (ta) {
+      const taUser = await db.collection('users').findOne({ _id: new ObjectId(ta) });
+      if (taUser && taUser.email) {
+        const updatedAssignment = { ...assignment, ...updateData, _id: new ObjectId(assignmentId) };
+        await sendTaAssignmentUpdatedEmail(updatedAssignment, taUser, student, team, updater);
+      }
+    }
+
     return NextResponse.json({ success: true, message: 'Assignment updated successfully' });
   } catch (error) {
     console.error('Error updating assignment:', error);
@@ -309,19 +356,29 @@ export async function PATCH(request, { params }) {
     }
 
     // Update assignment with grade
+    const updateData = { 
+      grade, 
+      status,
+      notes: notes ?? assignment.notes ?? "",
+      updatedAt: new Date(),
+      gradedBy: new ObjectId(userId),
+      gradedAt: new Date()
+    };
+    
     await db.collection('assignments').updateOne(
       { _id: new ObjectId(assignmentId) },
-      { 
-        $set: { 
-          grade, 
-          status,
-          notes: notes ?? assignment.notes ?? "",
-          updatedAt: new Date(),
-          gradedBy: new ObjectId(userId),
-          gradedAt: new Date()
-        } 
-      }
+      { $set: updateData }
     );
+
+    // Get student and grader info for email
+    const student = await db.collection('users').findOne({ _id: assignment.assignedTo });
+    const grader = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+    // Send email notification
+    if (student && student.email) {
+      const gradedAssignment = { ...assignment, ...updateData };
+      await sendAssignmentGradedEmail(gradedAssignment, student, team, grader);
+    }
 
     return NextResponse.json({ 
       success: true, 
@@ -376,6 +433,23 @@ export async function DELETE(request, { params }) {
 
     if (!isEditor && !isAssignmentTA) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Get student and deleter info for email before deleting
+    const student = await db.collection('users').findOne({ _id: assignment.assignedTo });
+    const deleter = await db.collection('users').findOne({ _id: new ObjectId(userId) });
+
+    // Send email notification
+    if (student && student.email) {
+      await sendAssignmentDeletedEmail(assignment, student, team, deleter);
+    }
+
+    // Send email notification to TA if assigned
+    if (assignment.ta) {
+      const taUser = await db.collection('users').findOne({ _id: assignment.ta });
+      if (taUser && taUser.email) {
+        await sendTaAssignmentDeletedEmail(assignment, taUser, student, team, deleter);
+      }
     }
 
     // Delete the assignment
