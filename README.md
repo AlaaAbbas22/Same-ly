@@ -1,6 +1,3 @@
-# Creating a README for Same'ly (سمعلي)
-
-Let me create a comprehensive README file for your Same'ly application:
 
 # Same'ly (سمعلي)
 
