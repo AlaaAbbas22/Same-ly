@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import SurahVerseSelector from "@/components/SurahVerseSelector";
-import { Shuffle, Plus, Trash2, Eye, CheckCircle2, ArrowRight } from "lucide-react";
+import { Shuffle, Plus, Trash2, Eye, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import surahData from "@/lib/surah.json";
 
@@ -31,6 +31,7 @@ function VerseRevealCard({
   result,
   revealedCount,
   onReveal,
+  onRevealAll,
   surahCorrect,
   surahGuess,
   onSurahGuessChange,
@@ -40,6 +41,9 @@ function VerseRevealCard({
   nextVerseLoading,
   surahList,
   hasNextVerse: hasNextVerseForCard,
+  onPreviousVerse,
+  canGoBack,
+  onRevealSurah,
 }) {
   const wordsArabic = useMemo(() => splitWords(result.arabic), [result.arabic]);
   const wordsEnglish = useMemo(() => splitWords(result.english), [result.english]);
@@ -125,6 +129,13 @@ function VerseRevealCard({
             </Button>
           </div>
         )}
+        {!surahCorrect && (
+          <div className="pt-1">
+            <Button type="button" variant="ghost" size="sm" onClick={onRevealSurah}>
+              Reveal surah
+            </Button>
+          </div>
+        )}
         {checkFeedback === "correct" && (
           <p className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5" />
@@ -146,6 +157,23 @@ function VerseRevealCard({
           >
             <Eye className="mr-2 h-4 w-4" />
             {allRevealed ? "Fully revealed" : "Reveal next word"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onRevealAll}
+            disabled={allRevealed}
+          >
+            Reveal full ayah
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onPreviousVerse}
+            disabled={!canGoBack}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous verse
           </Button>
           <Button
             type="button"
@@ -189,6 +217,7 @@ export default function RandomVersePage() {
   const [loading, setLoading] = useState(false);
   const [nextVerseLoading, setNextVerseLoading] = useState(false);
   const [error, setError] = useState(null);
+   const [history, setHistory] = useState([]);
 
   const setIntervalAt = (index, updater) => {
     setIntervals((prev) => {
@@ -215,6 +244,7 @@ export default function RandomVersePage() {
     }
     setError(null);
     setResult(null);
+    setHistory([]);
     setRevealedCount(0);
     setSurahGuess("");
     setSurahCorrect(false);
@@ -232,6 +262,7 @@ export default function RandomVersePage() {
         setError(data.error || "Failed to get random verse.");
         return;
       }
+      setHistory((prev) => (result ? [...prev, result] : prev));
       setResult(data);
       setRevealedCount(0);
       setSurahGuess("");
@@ -267,6 +298,7 @@ export default function RandomVersePage() {
         setError(data.error || "Failed to get next verse.");
         return;
       }
+      setHistory((prev) => [...prev, result]);
       setResult(data);
       setRevealedCount(0);
       setSurahGuess("");
@@ -289,6 +321,33 @@ export default function RandomVersePage() {
       setCheckFeedback("wrong");
     }
   };
+
+  const handleRevealAll = () => {
+    // Large number; capped inside VerseRevealCard
+    setRevealedCount(999);
+  };
+
+  const handleRevealSurah = () => {
+    setSurahCorrect(true);
+    setCheckFeedback("correct");
+  };
+
+  const handlePreviousVerse = () => {
+    setHistory((prev) => {
+      if (!prev.length) return prev;
+      const nextHistory = prev.slice(0, -1);
+      const previousVerse = prev[prev.length - 1];
+      setResult(previousVerse);
+      setRevealedCount(0);
+      setSurahGuess("");
+      setSurahCorrect(false);
+      setCheckFeedback(null);
+      setError(null);
+      return nextHistory;
+    });
+  };
+
+  const canGoBack = history.length > 0;
 
   const canSubmit = intervals.some(
     (i) => i.start?.surah && i.end?.surah
@@ -396,6 +455,7 @@ export default function RandomVersePage() {
             result={result}
             revealedCount={revealedCount}
             onReveal={() => setRevealedCount((c) => c + 1)}
+            onRevealAll={handleRevealAll}
             surahCorrect={surahCorrect}
             surahGuess={surahGuess}
             onSurahGuessChange={(v) => {
@@ -408,6 +468,9 @@ export default function RandomVersePage() {
             nextVerseLoading={nextVerseLoading}
             surahList={surahData}
             hasNextVerse={hasNextVerse(result.surah, result.verse)}
+            onPreviousVerse={handlePreviousVerse}
+            canGoBack={canGoBack}
+            onRevealSurah={handleRevealSurah}
           />
         )}
       </div>
