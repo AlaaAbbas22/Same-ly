@@ -19,6 +19,14 @@ function isSurahGuessCorrect(selectedSurahNum, result) {
   return Number.isInteger(num) && num >= 1 && num <= 114 && num === result.surah;
 }
 
+function hasNextVerse(surah, verse) {
+  if (!surah || !verse) return false;
+  const info = surahData[surah - 1];
+  if (!info) return false;
+  if (verse < info.totalAyah) return true;
+  return surah < 114;
+}
+
 function VerseRevealCard({
   result,
   revealedCount,
@@ -31,6 +39,7 @@ function VerseRevealCard({
   onNextVerse,
   nextVerseLoading,
   surahList,
+  hasNextVerse: hasNextVerseForCard,
 }) {
   const wordsArabic = useMemo(() => splitWords(result.arabic), [result.arabic]);
   const wordsEnglish = useMemo(() => splitWords(result.english), [result.english]);
@@ -142,17 +151,19 @@ function VerseRevealCard({
             type="button"
             variant="outline"
             onClick={onNextVerse}
-            disabled={nextVerseLoading}
+            disabled={nextVerseLoading || !hasNextVerseForCard}
           >
             {nextVerseLoading ? (
               <span className="flex items-center gap-2">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 Loading…
               </span>
-            ) : (
+            ) : hasNextVerseForCard ? (
               <>
                 Next verse <ArrowRight className="ml-2 h-4 w-4" />
               </>
+            ) : (
+              <>End of Quran</>
             )}
           </Button>
         </div>
@@ -244,16 +255,13 @@ export default function RandomVersePage() {
   });
 
   const fetchNextVerse = async () => {
-    if (!result || !intervals.length) return;
+    if (!result) return;
     setNextVerseLoading(true);
     setCheckFeedback(null);
+    setError(null);
     try {
-      const body = buildIntervalsBody(intervals);
-      const res = await fetch("/api/random-verse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      const params = new URLSearchParams({ surah: String(result.surah), verse: String(result.verse) });
+      const res = await fetch(`/api/verse/next?${params}`);
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to get next verse.");
@@ -264,7 +272,6 @@ export default function RandomVersePage() {
       setSurahGuess("");
       setSurahCorrect(false);
       setCheckFeedback(null);
-      setError(null);
     } catch (err) {
       setError("Something went wrong. Please try again.");
       console.error(err);
@@ -400,6 +407,7 @@ export default function RandomVersePage() {
             onNextVerse={fetchNextVerse}
             nextVerseLoading={nextVerseLoading}
             surahList={surahData}
+            hasNextVerse={hasNextVerse(result.surah, result.verse)}
           />
         )}
       </div>
