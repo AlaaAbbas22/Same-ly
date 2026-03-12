@@ -27,10 +27,15 @@ export default function Home() {
               track progress, and provide feedback - all in one place.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
               <Link href="/dashboard" passHref>
                 <Button size="lg" className="w-full sm:w-auto">
                   Go to Dashboard
+                </Button>
+              </Link>
+              <Link href="/random-verse" passHref>
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  Random Verse
                 </Button>
               </Link>
               <Link href="/login" passHref>
