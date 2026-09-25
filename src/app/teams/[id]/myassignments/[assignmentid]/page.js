@@ -33,12 +33,12 @@ export default function AssignmentDetailPage() {
         throw new Error(data.error || "Failed to fetch assignments");
       }
       const data = await res.json();
-      const foundAssignment = data.find(a => a._id === params.assignmentid);
-      
+      const foundAssignment = data.find((a) => a._id === params.assignmentid);
+
       if (!foundAssignment) {
         throw new Error("Assignment not found");
       }
-      
+
       setAssignment(foundAssignment);
     } catch (err) {
       setError(err.message);
@@ -54,13 +54,13 @@ export default function AssignmentDetailPage() {
         throw new Error("Failed to fetch surahs");
       }
       const data = await response.json();
-      
+
       // Create a map of surah numbers to names for easy lookup
       const surahMap = {};
       data.forEach((surah, index) => {
         surahMap[index] = {
           name: surah.surahName,
-          arabicName: surah.surahNameArabic
+          arabicName: surah.surahNameArabic,
         };
       });
       setSurahNames(surahMap);
@@ -70,18 +70,18 @@ export default function AssignmentDetailPage() {
   };
 
   const getSurahName = (surahNumber) => {
-    surahNumber = parseInt(surahNumber)-1;
+    surahNumber = parseInt(surahNumber) - 1;
     if (!surahNames[surahNumber]) {
-      return surahNumber+1;
+      return surahNumber + 1;
     }
-    return `${surahNumber+1}. ${surahNames[surahNumber].name} (${surahNames[surahNumber].arabicName})`;
+    return `${surahNumber + 1}. ${surahNames[surahNumber].name} (${surahNames[surahNumber].arabicName})`;
   };
 
   // Function to get status badge styling based on status
   const getStatusBadge = (status) => {
     const baseClasses = "px-2 py-1 rounded-full text-xs font-medium";
-    
-    switch(status) {
+
+    switch (status) {
       case "pending":
         return `${baseClasses} bg-yellow-100 text-yellow-800 border border-yellow-200`;
       case "in-progress":
@@ -98,12 +98,14 @@ export default function AssignmentDetailPage() {
   // Function to get type badge styling
   const getTypeBadge = (type) => {
     const baseClasses = "px-2 py-1 rounded-full text-xs font-medium";
-    
-    switch(type) {
+
+    switch (type) {
       case "Memorization":
         return `${baseClasses} bg-indigo-100 text-indigo-800 border border-indigo-200`;
       case "Recitation":
         return `${baseClasses} bg-emerald-100 text-emerald-800 border border-emerald-200`;
+      case "Revision":
+        return `${baseClasses} bg-orange-100 text-orange-800 border border-orange-200`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;
     }
@@ -118,84 +120,105 @@ export default function AssignmentDetailPage() {
   }
 
   if (!session) {
-    return (
-      <LoginButton />
-    );
+    return <LoginButton />;
   }
 
   return (
     <div className="p-8">
       <div className="flex items-center mb-6">
-        <Button variant="outline" onClick={() => router.push(`/teams/${params.id}/myassignments`)} className="mr-4">
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/teams/${params.id}/myassignments`)}
+          className="mr-4"
+        >
           Back to My Assignments
         </Button>
         <h1 className="text-2xl font-bold">Assignment Details</h1>
       </div>
-      
+
       {error && <div className="text-red-500 mb-4">{error}</div>}
-      
+
       {assignment ? (
         <Card className="max-w-3xl mx-auto">
           <CardContent className="p-6">
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold mb-4">Assignment Content</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Assignment Content
+                </h2>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-lg mb-2">
-                    From Surah {getSurahName(assignment.start.surah)}: {assignment.start.verse}
+                    From Surah {getSurahName(assignment.start.surah)}:{" "}
+                    {assignment.start.verse}
                   </p>
                   <p className="text-lg">
-                    To Surah {getSurahName(assignment.end.surah)}: {assignment.end.verse}
+                    To Surah {getSurahName(assignment.end.surah)}:{" "}
+                    {assignment.end.verse}
                   </p>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h3 className="text-md font-medium mb-2">Assignment Type</h3>
-                  <span className={getTypeBadge(assignment.type || "Memorization")}>
+                  <span
+                    className={getTypeBadge(assignment.type || "Memorization")}
+                  >
                     {assignment.type || "Memorization"}
                   </span>
                 </div>
-                
+
                 <div>
                   <h3 className="text-md font-medium mb-2">Status</h3>
                   <span className={getStatusBadge(assignment.status)}>
-                    {assignment.status?.charAt(0).toUpperCase() + assignment.status?.slice(1)}
+                    {assignment.status?.charAt(0).toUpperCase() +
+                      assignment.status?.slice(1)}
                   </span>
                 </div>
-                
-                {assignment.grade !== undefined && assignment.grade !== null && (
-                  <div>
-                    <h3 className="text-md font-medium mb-2">Grade</h3>
-                    <p className="text-lg font-semibold">{assignment.grade}/100</p>
-                  </div>
-                )}
-                
+
+                {assignment.grade !== undefined &&
+                  assignment.grade !== null && (
+                    <div>
+                      <h3 className="text-md font-medium mb-2">Grade</h3>
+                      <p className="text-lg font-semibold">
+                        {assignment.grade}/100
+                      </p>
+                    </div>
+                  )}
+
                 <div>
                   <h3 className="text-md font-medium mb-2">Timeline</h3>
                   <p>
                     <span className="font-medium">Start:</span>{" "}
-                    {assignment.startTime ? new Date(assignment.startTime).toLocaleString() : "-"}
+                    {assignment.startTime
+                      ? new Date(assignment.startTime).toLocaleString()
+                      : "-"}
                   </p>
                   <p>
                     <span className="font-medium">End:</span>{" "}
-                    {assignment.endTime ? new Date(assignment.endTime).toLocaleString() : "-"}
+                    {assignment.endTime
+                      ? new Date(assignment.endTime).toLocaleString()
+                      : "-"}
                   </p>
                 </div>
               </div>
-              
+
               {assignment.ta && (
                 <div>
-                  <h3 className="text-md font-medium mb-2">Teaching Assistant</h3>
+                  <h3 className="text-md font-medium mb-2">
+                    Teaching Assistant
+                  </h3>
                   <p>
-                    <a href={`mailto:${assignment.ta.email}`} className="text-blue-600 hover:underline">
+                    <a
+                      href={`mailto:${assignment.ta.email}`}
+                      className="text-blue-600 hover:underline"
+                    >
                       {assignment.ta.name}
                     </a>
                   </p>
                 </div>
               )}
-              
+
               {assignment.notes && (
                 <div>
                   <h3 className="text-md font-medium mb-2">Notes</h3>

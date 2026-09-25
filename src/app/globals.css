@@ -122,12 +122,13 @@
 }
 
 body {
-  background-image: url('/bg.jpg');
+  background-image: url("/bg.jpg");
   background-size: 100% auto;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
   min-height: 100vh;
+  backdrop-filter: brightness(0.75);
 }
 
 @media (min-width: 769px) {

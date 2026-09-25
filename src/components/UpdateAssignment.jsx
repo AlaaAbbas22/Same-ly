@@ -166,6 +166,7 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
               <SelectContent>
                 <SelectItem value="Memorization">Memorization</SelectItem>
                 <SelectItem value="Recitation">Recitation</SelectItem>
+                <SelectItem value="Revision">Revision</SelectItem>
               </SelectContent>
             </Select>
           </div>
