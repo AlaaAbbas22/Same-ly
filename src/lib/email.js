@@ -424,3 +424,45 @@ export const sendAssignmentDeletedEmail = async (assignment, student, team, dele
     return { success: false, error };
   }
 };
+
+const getOtpEmailTemplate = (name, otp) => {
+  return `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+    <h1 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;">Verify Your Account</h1>
+    <p>Hello ${name},</p>
+    <p>Thank you for signing up! Please use the following One-Time Password (OTP) to verify your account:</p>
+    
+    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0; text-align: center;">
+      <h2 style="margin: 0; color: #4a5568; font-size: 24px; letter-spacing: 5px;">${otp}</h2>
+    </div>
+    
+    <p>This OTP is valid for 10 minutes. If you did not request this, please ignore this email.</p>
+    
+    <p style="margin-top: 30px; font-size: 12px; color: #666; text-align: center;">
+      This is an automated message from سمّعلي (Same'ly). Please do not reply to this email.
+    </p>
+  </div>
+  `;
+};
+
+export const sendOtpEmail = async (to, name, otp) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Same\'ly <admin@same-ly.info>',
+      to: [to],
+      subject: 'Verify Your Same\'ly Account',
+      html: getOtpEmailTemplate(name, otp),
+    });
+
+    if (error) {
+      console.error('Error sending OTP email:', error);
+      return { success: false, error: error.message };
+    }
+    
+    console.log('OTP email sent:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('Exception sending OTP email:', error);
+    return { success: false, error: error.message };
+  }
+};

@@ -1,7 +1,7 @@
 import { connectToDatabase } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
-
+import { sendOtpEmail } from "@/lib/email";
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -31,8 +31,8 @@ export async function POST(request) {
 
     const { db } = await connectToDatabase();
 
+    // Check if user already exists in users collection
     const existingUser = await db.collection("users").findOne({ email });
-
     if (existingUser) {
       return NextResponse.json(
         { message: "User already exists" },
@@ -40,18 +40,39 @@ export async function POST(request) {
       );
     }
 
+    // Check if user is already in the otps collection awaiting verification
+    const existingOtpUser = await db.collection("otps").findOne({ email });
+    if (existingOtpUser) {
+      // For simplicity, we'll just resend OTP or inform user to check email
+      // In a real app, you might want to rate-limit or allow OTP resend requests
+      await sendOtpEmail(email, name, existingOtpUser.otp);
+      return NextResponse.json(
+        { message: "User awaiting verification. OTP re-sent to your email." },
+        { status: 200 }
+      );
+    }
+
     const hashedPassword = await hash(password, 12);
 
-    const result = await db.collection("users").insertOne({
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+
+    const result = await db.collection("otps").insertOne({
       name,
       email,
       password: hashedPassword,
       birthDate: new Date(birthDate),
       createdAt: new Date(),
+      otp,
+      otpExpires,
     });
 
+    // Send OTP email
+    await sendOtpEmail(email, name, otp);
+
     return NextResponse.json(
-      { message: "User created", userId: result.insertedId.toString() },
+      { message: "User registered. Please check your email for OTP verification.", userId: result.insertedId.toString() },
       { status: 201 }
     );
   } catch (error) {
