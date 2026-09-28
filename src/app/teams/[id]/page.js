@@ -108,6 +108,20 @@ export default function TeamDetail() {
     );
 
   const teamMembers = [...team.editors, ...team.students];
+  const currentUserId = session.user.id || session.user.sub;
+
+  // Separate current user from others and sort
+  const sortedEditors = [...team.editors].sort((a, b) => {
+    if (a._id === currentUserId) return -1;
+    if (b._id === currentUserId) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const sortedStudents = [...team.students].sort((a, b) => {
+    if (a._id === currentUserId) return -1;
+    if (b._id === currentUserId) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
     <div className="p-8">
@@ -178,7 +192,7 @@ export default function TeamDetail() {
 
           <TabsContent value="editors">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {team.editors.map((editor) => (
+              {sortedEditors.map((editor) => (
                 <Card key={editor._id}>
                   <CardHeader className="flex flex-row items-center gap-4 pb-2">
                     <Avatar>
@@ -186,16 +200,29 @@ export default function TeamDetail() {
                       <AvatarFallback>{editor.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-base">{editor.name}</CardTitle>
+                      <CardTitle className="text-base">
+                        {editor.name}
+                        {editor._id === currentUserId && <Badge className="ml-2">You</Badge>}
+                      </CardTitle>
                       <p className="text-sm text-muted-foreground">
                         {editor.email}
                       </p>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col gap-2">
                       <Badge>Editor</Badge>
-                      {isEditor && editor._id !== session.user.id && (
+                      {isEditor && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <Link href={`/teams/${team._id}/teacher_stats/${editor._id}`} passHref>
+                            <Button variant="outline" size="sm">Teacher Stats</Button>
+                          </Link>
+                           <Link href={`/teams/${team._id}/student_stats/${editor._id}`} passHref>
+                              <Button variant="outline" size="sm">Student Stats</Button>
+                            </Link>
+                        </div>
+                      )}
+                      {isEditor && editor._id !== currentUserId && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -216,7 +243,7 @@ export default function TeamDetail() {
           <TabsContent value="students">
             {team.students.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {team.students.map((student) => (
+                {sortedStudents.map((student) => (
                   <Card key={student._id}>
                     <CardHeader className="flex flex-row items-center gap-4 pb-2">
                       <Avatar>
@@ -228,6 +255,7 @@ export default function TeamDetail() {
                       <div>
                         <CardTitle className="text-base">
                           {student.name}
+                          {student._id === currentUserId && <Badge className="ml-2">You</Badge>}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
                           {student.email}
@@ -235,8 +263,15 @@ export default function TeamDetail() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col gap-2">
                         <Badge variant="secondary">Student</Badge>
+                        {(isEditor || student._id == currentUserId) && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <Link href={`/teams/${team._id}/student_stats/${student._id}`} passHref>
+                              <Button variant="outline" size="sm">Student Stats</Button>
+                            </Link>
+                          </div>
+                        )}
                         {isEditor && (
                           <Button
                             variant="ghost"
