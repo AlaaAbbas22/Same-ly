@@ -281,7 +281,7 @@ const getTaAssignmentDeletedTemplate = (assignment, ta, student, team, deleter) 
 export const sendTaAssignmentCreatedEmail = async (assignment, ta, student, team, creator) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'سمّعلي (Same\'ly) <onboarding@resend.dev>',
+      from: 'سمّعلي (Same\'ly) <admin@same-ly.info>',
       to: ta.email,
       subject: `New Assignment to Supervise in ${team.name}`,
       html: getTaAssignmentCreatedTemplate(assignment, ta, student, team, creator),
@@ -302,7 +302,7 @@ export const sendTaAssignmentCreatedEmail = async (assignment, ta, student, team
 export const sendTaAssignmentUpdatedEmail = async (assignment, ta, student, team, updater) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'سمّعلي (Same\'ly) <onboarding@resend.dev>',
+      from: 'سمّعلي (Same\'ly) <admin@same-ly.info>',
       to: ta.email,
       subject: `Assignment Updated in ${team.name}`,
       html: getTaAssignmentUpdatedTemplate(assignment, ta, student, team, updater),
@@ -323,7 +323,7 @@ export const sendTaAssignmentUpdatedEmail = async (assignment, ta, student, team
 export const sendTaAssignmentDeletedEmail = async (assignment, ta, student, team, deleter) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'سمّعلي (Same\'ly) <onboarding@resend.dev>',
+      from: 'سمّعلي (Same\'ly) <admin@same-ly.info>',
       to: ta.email,
       subject: `Assignment Deleted in ${team.name}`,
       html: getTaAssignmentDeletedTemplate(assignment, ta, student, team, deleter),
@@ -344,7 +344,7 @@ export const sendTaAssignmentDeletedEmail = async (assignment, ta, student, team
 export const sendAssignmentCreatedEmail = async (assignment, student, team, creator) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'سمّعلي (Same\'ly) <onboarding@resend.dev>',
+      from: 'سمّعلي (Same\'ly) <admin@same-ly.info>',
       to: student.email,
       subject: `New Assignment in ${team.name}`,
       html: getAssignmentCreatedTemplate(assignment, student, team, creator),
@@ -365,7 +365,7 @@ export const sendAssignmentCreatedEmail = async (assignment, student, team, crea
 export const sendAssignmentUpdatedEmail = async (assignment, student, team, updater) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'سمّعلي (Same\'ly) <onboarding@resend.dev>',
+      from: 'سمّعلي (Same\'ly) <admin@same-ly.info>',
       to: student.email,
       subject: `Assignment Updated in ${team.name}`,
       html: getAssignmentUpdatedTemplate(assignment, student, team, updater),
@@ -386,7 +386,7 @@ export const sendAssignmentUpdatedEmail = async (assignment, student, team, upda
 export const sendAssignmentGradedEmail = async (assignment, student, team, grader) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'سمّعلي (Same\'ly) <onboarding@resend.dev>',
+      from: 'سمّعلي (Same\'ly) <admin@same-ly.info>',
       to: student.email,
       subject: `Assignment Graded in ${team.name}`,
       html: getAssignmentGradedTemplate(assignment, student, team, grader),
@@ -407,7 +407,7 @@ export const sendAssignmentGradedEmail = async (assignment, student, team, grade
 export const sendAssignmentDeletedEmail = async (assignment, student, team, deleter) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: 'سمّعلي (Same\'ly) <onboarding@resend.dev>',
+      from: 'سمّعلي (Same\'ly) <admin@same-ly.info>',
       to: student.email,
       subject: `Assignment Deleted in ${team.name}`,
       html: getAssignmentDeletedTemplate(assignment, student, team, deleter),
