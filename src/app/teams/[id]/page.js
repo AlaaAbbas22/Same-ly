@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserPlus, Settings, ArrowLeft, UserCheck } from "lucide-react";
 import AddMemberDialog from "@/components/teams/AddMemberDialog";
 import CreateAssignment from "@/components/teams/CreateAssignment";
+import EditTeamSettingsDialog from "@/components/teams/EditTeamSettingsDialog";
 import Link from "next/link";
 import LoginButton from "@/components/LoginButton";
 
@@ -22,6 +23,7 @@ export default function TeamDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false);
+  const [isEditTeamSettingsOpen, setIsEditTeamSettingsOpen] = useState(false);
   const [isEditor, setIsEditor] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
@@ -140,7 +142,7 @@ export default function TeamDetail() {
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add Member
               </Button>
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => setIsEditTeamSettingsOpen(true)}>
                 <Settings className="mr-2 h-4 w-4" />
                 Team Settings
               </Button>
@@ -286,6 +288,12 @@ export default function TeamDetail() {
             teamId={params.id}
             teamMembers={teamMembers}
             onAssignmentCreated={handleAssignmentCreated}
+          />
+          <EditTeamSettingsDialog
+            open={isEditTeamSettingsOpen}
+            onOpenChange={setIsEditTeamSettingsOpen}
+            team={team}
+            onTeamUpdated={fetchTeamDetails}
           />
         </>
       )}

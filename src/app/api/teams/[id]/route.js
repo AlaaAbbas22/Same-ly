@@ -86,3 +86,58 @@ export async function GET(request, { params }) {
     return NextResponse.json({ error: 'Failed to fetch team details' }, { status: 500 });
   }
 }
+
+export async function PATCH(request, { params }) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = params;
+    const { name } = await request.json();
+
+    if (!id || !name) {
+      return NextResponse.json({ error: 'Team ID and new name are required' }, { status: 400 });
+    }
+
+    let objectId;
+    try {
+      objectId = new ObjectId(id);
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid team ID format' }, { status: 400 });
+    }
+
+    const client = await clientPromise;
+    const db = client.db();
+
+    const team = await db.collection('teams').findOne({ _id: objectId });
+
+    if (!team) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    }
+
+    // Check if user is an editor of the team
+    const userId = session.user.id || session.user.sub;
+    const isEditor = team.editors.includes(userId);
+
+    if (!isEditor) {
+      return NextResponse.json({ error: 'Forbidden: Only editors can update team details' }, { status: 403 });
+    }
+
+    const result = await db.collection('teams').updateOne(
+      { _id: objectId },
+      { $set: { name } }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: 'Team not found or no changes made' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Team name updated successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error updating team details:', error);
+    return NextResponse.json({ error: 'Failed to update team details' }, { status: 500 });
+  }
+}
