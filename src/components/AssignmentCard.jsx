@@ -156,18 +156,7 @@ export default function AssignmentCard({
             </a>
           </div>
         )}
-        {/* Show TA name and email */}
-        {assignment.ta ? (
-          <div className="mb-2">
-            <a href={`mailto:${assignment.taEmail}`} className="underline">
-              <strong>TA:</strong> {assignment.taName}
-            </a>
-          </div>
-        ) : (
-          <div className="mb-2">
-            <strong>TA:</strong> Not assigned
-          </div>
-        )}
+
 
         {/* Student-specific content */}
         {!isTA && assignment.ta && (
