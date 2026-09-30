@@ -157,20 +157,20 @@ export default function CreateAssignment({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-[95vw]">
+        <DialogHeader className={"max-w-[80%]"}>
           <DialogTitle>Add Assignment</DialogTitle>
           <DialogDescription>
             Create a new assignment for a student.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 max-w-[80%]">
           <Label>Assign To</Label>
           <select
             name="assignedTo"
             value={form.assignedTo}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2 rounded max-w-[80%]"
           >
             <option value="">Select user</option>
             {teamMembers.map((user) => (
@@ -180,9 +180,9 @@ export default function CreateAssignment({
             ))}
           </select>
 
-          <div className="space-y-2">
+          <div className="space-y-2 max-w-[80%]">
             <Label htmlFor="type">Assignment Type</Label>
-            <Select value={form.type} onValueChange={handleTypeChange}>
+            <Select value={form.type} onValueChange={handleTypeChange} className="max-w-[80%]">
               <SelectTrigger id="type">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
@@ -194,7 +194,7 @@ export default function CreateAssignment({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 max-w-[80%]">
             <SurahVerseSelector
               type="start"
               value={form.start}
@@ -214,7 +214,7 @@ export default function CreateAssignment({
             name="ta"
             value={form.ta}
             onChange={handleChange}
-            className="border p-2 rounded"
+            className="border p-2 rounded max-w-[80%]"
           >
             <option value="">None</option>
             {teamMembers.map((user) => (
@@ -228,9 +228,10 @@ export default function CreateAssignment({
             placeholder="Notes"
             value={form.notes}
             onChange={handleChange}
+            className="border p-2 rounded max-w-[80%]"
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 max-w-[80%]">
             <div className="space-y-2">
               <Label htmlFor="startTime">Start Time</Label>
               <Input
@@ -256,11 +257,11 @@ export default function CreateAssignment({
           {dateError && <p className="text-red-500 text-sm">{dateError}</p>}
           {error && <p className="text-red-500 text-sm">{error}</p>}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={loading}>
+        <DialogFooter >
+          <Button variant="outline" onClick={handleClose} disabled={loading} >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading || dateError}>
+          <Button onClick={handleSubmit} disabled={loading || dateError} >
             {loading ? "Saving..." : "Save"}
           </Button>
         </DialogFooter>

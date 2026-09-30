@@ -19,7 +19,7 @@ export default function RootLayout({ children, session }) {
     <html lang="en">
       <SessionProvider session={session}>
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} antialiased pb-16`}
         >
           {children}
         </body>

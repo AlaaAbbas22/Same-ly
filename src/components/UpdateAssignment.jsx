@@ -147,7 +147,7 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Update Assignment
+          Update Details
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">

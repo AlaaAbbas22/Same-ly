@@ -52,7 +52,7 @@ export default function GradeAssignment({ assignment, teamId, onGradeUpdated }) 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Update Grade
+          Grade it
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
