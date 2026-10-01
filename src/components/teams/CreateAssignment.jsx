@@ -91,10 +91,13 @@ export default function CreateAssignment({
   };
 
   const handleSurahVerseChange = (type, value) => {
+    // if the type is start, set end to it as well
     setForm({
       ...form,
+      end: type === "start" ? value : form.end,
       [type]: value,
     });
+
   };
 
   const handleTypeChange = (value) => {

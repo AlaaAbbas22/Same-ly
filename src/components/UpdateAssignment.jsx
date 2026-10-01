@@ -82,8 +82,10 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
   };
 
   const handleSurahVerseChange = (type, value) => {
+    // if the type is start, set end to it as well
     setFormData({
       ...formData,
+      end: type === "start" ? value : formData.end,
       [type]: value,
     });
   };

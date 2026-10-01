@@ -51,7 +51,11 @@ export default function SurahVerseSelector({
         }
 
         const data = await response.json();
-        setSurahs(data);
+        // add index to each surah
+        setSurahs(data.map((surah, index) => ({
+          ...surah,
+          surahNo: index+1
+        })));
       } catch (err) {
         setError(err.message);
         console.error("Error fetching surahs:", err);
@@ -114,7 +118,7 @@ export default function SurahVerseSelector({
       verse: parseInt(verse),
     });
   };
-
+  // add index to the selectedSurah
   const selectedSurah = surahs.find(
     (surah) => surah.surahNo === parseInt(value?.surah)
   );
@@ -163,9 +167,8 @@ export default function SurahVerseSelector({
                 </CommandEmpty>
 
                 <CommandGroup>
-                  {surahs.map((surah) => {
-                    const surahNumber = surah.surahNo?.toString();
-
+                  {surahs.map((surah, index) => {
+                    const surahNumber = surah.surahNo?.toString() || (index + 1).toString();
                     const isSelected =
                       value?.surah?.toString() === surahNumber;
 
