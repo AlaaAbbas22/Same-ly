@@ -1,9 +1,11 @@
 "use client"
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; // Changed from next/router to next/navigation
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { getSafeCallbackUrl, withCallbackUrl } from '@/lib/utils';
 
-export default function Signup() {
+function SignupForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -19,6 +21,9 @@ export default function Signup() {
   const [resendTimer, setResendTimer] = useState(0);
   const [canResendOtp, setCanResendOtp] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = getSafeCallbackUrl(searchParams.get('callbackUrl'));
+  const loginHref = withCallbackUrl("/login", callbackUrl);
 
   useEffect(() => {
     let timer;
@@ -85,7 +90,17 @@ export default function Signup() {
         throw new Error(data.message || 'OTP verification failed!');
       }
 
-      router.push('/login?success=Account verified and created successfully');
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: signupEmail,
+        password,
+      });
+
+      if (result?.error) {
+        router.push(withCallbackUrl('/login?success=Account verified and created successfully', callbackUrl));
+      } else {
+        router.replace(callbackUrl);
+      }
     } catch (error) {
       setOtpError(error.message);
     } finally {
@@ -216,7 +231,7 @@ export default function Signup() {
             </div>
 
             <div className="text-sm text-center">
-              <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link href={loginHref} className="font-medium text-indigo-600 hover:text-indigo-500">
                 Already have an account? Sign in
               </Link>
             </div>
@@ -275,7 +290,7 @@ export default function Signup() {
             </div>
 
             <div className="text-sm text-center">
-              <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link href={loginHref} className="font-medium text-indigo-600 hover:text-indigo-500">
                 Already have an account? Sign in
               </Link>
             </div>
@@ -283,5 +298,17 @@ export default function Signup() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Signup() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

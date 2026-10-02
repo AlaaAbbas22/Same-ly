@@ -89,13 +89,19 @@ export default function TeamDetail() {
     }
   };
 
-  if (status === "loading" || isLoading)
+  if (status === "loading")
     return (
       <div className="p-8 flex justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     );
   if (!session) return <LoginButton />;
+  if (isLoading)
+    return (
+      <div className="p-8 flex justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
   if (!team)
     return (
       <div className="p-8">
