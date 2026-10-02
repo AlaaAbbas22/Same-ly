@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [teams, setTeams] = useState({ editingTeams: [], studentTeams: [] });
   const [isCreateTeamOpen, setIsCreateTeamOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("student");
 
   useEffect(() => {
     if (session) {
@@ -77,7 +78,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <Tabs defaultValue="editing" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="editing">Teams I Manage</TabsTrigger>
           <TabsTrigger value="student">Teams I'm In</TabsTrigger>
@@ -172,6 +173,13 @@ export default function Dashboard() {
               <p className="text-muted-foreground mt-1">
                 Teams you join as a student will appear here
               </p>
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab("editing")}
+                className="mt-4"
+              >
+                Go to Teams I Manage
+              </Button>
             </div>
           )}
         </TabsContent>
