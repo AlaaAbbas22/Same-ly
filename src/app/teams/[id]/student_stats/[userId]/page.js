@@ -14,6 +14,7 @@ export default function StudentStatsPage() {
   const [studentStats, setStudentStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [studentName, setStudentName] = useState("");
 
   useEffect(() => {
     async function fetchStudentStats() {
@@ -26,6 +27,7 @@ export default function StudentStatsPage() {
           throw new Error(data.error || "Failed to fetch student stats");
         }
         setStudentStats(data.stats);
+        setStudentName(data.studentName);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -88,7 +90,7 @@ export default function StudentStatsPage() {
         <Button variant="outline" onClick={() => router.back()} className="mr-4">
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold">Student Statistics for {studentId}</h1>
+        <h1 className="text-2xl font-bold">Student Statistics for {studentName}</h1>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

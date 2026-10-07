@@ -65,12 +65,16 @@ export async function GET(request, { params }) {
     studentAssignments.forEach(assignment => {
       if (assignment.grade !== undefined) {
         totalScore += assignment.grade;
-        gradedAssignmentsCount++;
+        
 
         const score = assignment.grade;
         const bucket = Math.floor(score / 10) * 10; // e.g., 90-99 -> 90
         const bucketKey = `${bucket}-${bucket + 9}`;
-        scoreDistribution[bucketKey] = (scoreDistribution[bucketKey] || 0) + 1;
+        // add score only if graded
+        if (assignment.status === 'graded') {
+          gradedAssignmentsCount++;
+          scoreDistribution[bucketKey] = (scoreDistribution[bucketKey] || 0) + 1;
+        }
       }
       assignmentsByStatus[assignment.status] = (assignmentsByStatus[assignment.status] || 0) + 1;
     });
@@ -80,6 +84,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       studentId: targetUserId,
       teamId,
+      studentName: user.name,
       stats: {
         averageScore,
         gradedAssignmentsCount,
