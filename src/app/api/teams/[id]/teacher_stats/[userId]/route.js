@@ -66,11 +66,14 @@ export async function GET(request, { params }) {
     gradedAssignmentsByTA.forEach(assignment => {
       const score = assignment.grade;
       totalScore += score;
-      totalGrades++;
 
       const bucket = Math.floor(score / 10) * 10; // e.g., 90-99 -> 90
       const bucketKey = `${bucket}-${bucket + 9}`;
-      scoreDistribution[bucketKey] = (scoreDistribution[bucketKey] || 0) + 1;
+      // add score only if graded
+      if (assignment.status === 'graded') {
+        scoreDistribution[bucketKey] = (scoreDistribution[bucketKey] || 0) + 1;
+        totalGrades++;
+      }
     });
 
     const averageScore = totalGrades > 0 ? (totalScore / totalGrades) : 0;
