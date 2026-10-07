@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 function Dialog({
   ...props
 }) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+  return <DialogPrimitive.Root data-slot="dialog" container={document.body} {...props} />;
 }
 
 function DialogTrigger({
@@ -21,7 +21,7 @@ function DialogTrigger({
 function DialogPortal({
   ...props
 }) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
+  return <DialogPrimitive.Portal data-slot="dialog-portal" container={document.body} {...props} />;
 }
 
 function DialogClose({
