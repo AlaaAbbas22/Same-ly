@@ -70,6 +70,8 @@ export default function AssignmentCard({
         return `${baseClasses} bg-green-100 text-green-800 border border-green-200`;
       case "graded":
         return `${baseClasses} bg-purple-100 text-purple-800 border border-purple-200`;
+      case "absent":
+        return `${baseClasses} bg-red-100 text-red-800 border border-red-200`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;
     }

@@ -87,6 +87,7 @@ export default function GradeAssignment({ assignment, teamId, onGradeUpdated }) 
                 <SelectItem value="in-progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="graded">Graded</SelectItem>
+                <SelectItem value="absent">Absent</SelectItem>
               </SelectContent>
             </Select>
           </div>
