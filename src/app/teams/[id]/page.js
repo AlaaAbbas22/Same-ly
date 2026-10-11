@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserPlus, Settings, ArrowLeft, UserCheck } from "lucide-react";
 import AddMemberDialog from "@/components/teams/AddMemberDialog";
 import CreateAssignment from "@/components/teams/CreateAssignment";
+import AbsenceReportDialog from "@/components/teams/AbsenceReportDialog";
 import EditTeamSettingsDialog from "@/components/teams/EditTeamSettingsDialog";
 import Link from "next/link";
 import LoginButton from "@/components/LoginButton";
@@ -23,6 +24,7 @@ export default function TeamDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false);
+  const [isAbsenceReportOpen, setIsAbsenceReportOpen] = useState(false);
   const [isEditTeamSettingsOpen, setIsEditTeamSettingsOpen] = useState(false);
   const [isEditor, setIsEditor] = useState(false);
   const [isStudent, setIsStudent] = useState(false);
@@ -171,6 +173,12 @@ export default function TeamDetail() {
                 onClick={() => setIsCreateAssignmentOpen(true)}
               >
                 Add Assignment
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => setIsAbsenceReportOpen(true)}
+              >
+                Absence Report
               </Button>
             </>
           )}
@@ -335,6 +343,12 @@ export default function TeamDetail() {
             onOpenChange={setIsEditTeamSettingsOpen}
             team={team}
             onTeamUpdated={fetchTeamDetails}
+          />
+          <AbsenceReportDialog
+            open={isAbsenceReportOpen}
+            onOpenChange={setIsAbsenceReportOpen}
+            teamId={params.id}
+            teamMembers={team.students}
           />
         </>
       )}
