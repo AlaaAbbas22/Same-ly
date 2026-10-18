@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, FileText } from "lucide-react";
-import { MultiSelect } from "react-multi-select-component";
+import { MultiSelect } from "react-multi-select-component-19";
 import { toast } from "sonner";
 import {
   Table,
