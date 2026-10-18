@@ -10,13 +10,24 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, FileText } from "lucide-react";
 import { MultiSelect } from "react-multi-select-component";
 import { toast } from "sonner";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function AbsenceReportDialog({
   teamId,
@@ -65,7 +76,9 @@ export default function AbsenceReportDialog({
         queryParams.append("studentIds", studentIds);
       }
 
-      const res = await fetch(`/api/teams/${teamId}/absence_report?${queryParams.toString()}`);
+      const res = await fetch(
+        `/api/teams/${teamId}/absence_report?${queryParams.toString()}`,
+      );
 
       if (!res.ok) {
         const errorData = await res.json();
@@ -85,30 +98,30 @@ export default function AbsenceReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="default">
-          <FileText className="mr-2 h-4 w-4" />
-          Absence Report
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Generate Absence Report</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="startDate" className="text-right">From Date:</label>
+            <label htmlFor="startDate" className="text-right">
+              From Date:
+            </label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
                   className={cn(
                     "w-[240px] justify-start text-left font-normal",
-                    !startDate && "text-muted-foreground"
+                    !startDate && "text-muted-foreground",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                  {startDate ? (
+                    format(startDate, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -122,14 +135,16 @@ export default function AbsenceReportDialog({
             </Popover>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="endDate" className="text-right">To Date:</label>
+            <label htmlFor="endDate" className="text-right">
+              To Date:
+            </label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
                   className={cn(
                     "w-[240px] justify-start text-left font-normal",
-                    !endDate && "text-muted-foreground"
+                    !endDate && "text-muted-foreground",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -147,7 +162,9 @@ export default function AbsenceReportDialog({
             </Popover>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <label htmlFor="students" className="text-right">Select Students:</label>
+            <label htmlFor="students" className="text-right">
+              Select Students:
+            </label>
             <div className="col-span-3">
               <MultiSelect
                 options={studentOptions}
