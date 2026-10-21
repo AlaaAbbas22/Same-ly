@@ -96,6 +96,32 @@ export default function AbsenceReportDialog({
     }
   };
 
+  const handleDownloadReport = () => {
+    console.log("Downloading report...");
+    const reportDataCSV = reportData.map((studentReport) => ({
+      studentName: studentReport.studentName,
+      attendedAssignments: studentReport.attendedAssignments,
+      absentAssignments: studentReport.absentAssignments,
+      totalAssignments: studentReport.totalAssignments,
+    }));
+
+    const csv = convertToCSV(reportDataCSV);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    // name the file as absence_report_<startDate>_<endDate>.csv
+    a.download = `absence_report_${format(startDate, "yyyy-MM-dd")}_${format(endDate, "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Report downloaded successfully!");
+  };
+
+  const convertToCSV = (data) => {
+    const csv = data.map((row) => Object.values(row).join(",")).join("\n");
+    return csv;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
@@ -208,6 +234,8 @@ export default function AbsenceReportDialog({
                   ))}
                 </TableBody>
               </Table>
+              {/* Download Report Button */}
+              <Button onClick={handleDownloadReport}>Download Report</Button>
             </div>
           )}
 
