@@ -98,12 +98,22 @@ export default function AbsenceReportDialog({
 
   const handleDownloadReport = () => {
     console.log("Downloading report...");
-    const reportDataCSV = reportData.map((studentReport) => ({
-      studentName: studentReport.studentName,
-      attendedAssignments: studentReport.attendedAssignments,
-      absentAssignments: studentReport.absentAssignments,
-      totalAssignments: studentReport.totalAssignments,
-    }));
+    //set first row as column names
+    const columnNames = [
+      "Student Name",
+      "Attended Assignments",
+      "Absent Assignments",
+      "Total Assignments",
+    ];
+    const reportDataCSV = [
+      columnNames,
+      ...reportData.map((studentReport) => [
+        studentReport.studentName,
+        studentReport.attendedAssignments,
+        studentReport.absentAssignments,
+        studentReport.totalAssignments,
+      ]),
+    ];
 
     const csv = convertToCSV(reportDataCSV);
     const blob = new Blob([csv], { type: "text/csv" });
