@@ -22,12 +22,17 @@ import {
 } from "@/components/ui/select";
 import SurahVerseSelector from "@/components/SurahVerseSelector";
 import { toast } from "sonner";
+import {
+  getNextMeetingOccurrence,
+  toDatetimeLocalValue,
+} from "@/lib/meetingTimes";
 
 export default function CreateAssignment({
   open,
   onOpenChange,
   teamId,
   teamMembers,
+  meetingTimes = [],
   onAssignmentCreated,
 }) {
   const [form, setForm] = useState({
@@ -42,14 +47,18 @@ export default function CreateAssignment({
     endTime: "",
     type: "Memorization",
   });
+  const [useNextMeeting, setUseNextMeeting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dateError, setDateError] = useState("");
+
+  const hasMeetingTimes = Array.isArray(meetingTimes) && meetingTimes.length > 0;
 
   const handleClose = () => {
     onOpenChange(false);
     setError("");
     setDateError("");
+    setUseNextMeeting(false);
     setForm({
       assignedTo: "",
       start: { surah: "1", verse: 1 },
@@ -62,6 +71,36 @@ export default function CreateAssignment({
       endTime: "",
       type: "Memorization",
     });
+  };
+
+  const applyNextMeeting = () => {
+    const next = getNextMeetingOccurrence(meetingTimes);
+    if (!next) {
+      toast.error("No upcoming meeting time found. Check team meeting settings.");
+      setUseNextMeeting(false);
+      return false;
+    }
+
+    const startTime = toDatetimeLocalValue(next.start);
+    const endTime = toDatetimeLocalValue(next.end);
+    setForm((prev) => ({ ...prev, startTime, endTime }));
+    validateDates(startTime, endTime);
+    return true;
+  };
+
+  const handleNextMeetingToggle = (checked) => {
+    if (checked) {
+      if (!hasMeetingTimes) {
+        toast.error("Set meeting times in team settings first.");
+        return;
+      }
+      if (applyNextMeeting()) {
+        setUseNextMeeting(true);
+      }
+      return;
+    }
+
+    setUseNextMeeting(false);
   };
 
   const handleChange = (e) => {
@@ -104,8 +143,14 @@ export default function CreateAssignment({
     setForm({
       ...form,
       type: value,
+      // Arabic has no surah range; keep DB defaults without showing selectors
+      ...(value === "Arabic"
+        ? { start: { surah: "1", verse: 1 }, end: { surah: "1", verse: 1 } }
+        : {}),
     });
   };
+
+  const isArabic = form.type === "Arabic";
 
   const handleSubmit = async () => {
     // Validate dates before submission
@@ -134,8 +179,14 @@ export default function CreateAssignment({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assignedTo: form.assignedTo,
-          start: { surah: form.start.surah, verse: Number(form.start.verse) },
-          end: { surah: form.end.surah, verse: Number(form.end.verse) },
+          start:
+            form.type === "Arabic"
+              ? { surah: "1", verse: 1 }
+              : { surah: form.start.surah, verse: Number(form.start.verse) },
+          end:
+            form.type === "Arabic"
+              ? { surah: "1", verse: 1 }
+              : { surah: form.end.surah, verse: Number(form.end.verse) },
           ta: form.ta || undefined,
           status: form.status,
           grade: form.grade ? Number(form.grade) : undefined,
@@ -193,33 +244,37 @@ export default function CreateAssignment({
                 <SelectItem value="Memorization">Memorization</SelectItem>
                 <SelectItem value="Recitation">Recitation</SelectItem>
                 <SelectItem value="Revision">Revision</SelectItem>
+                <SelectItem value="Arabic">Arabic</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 max-w-[80%]">
-            <SurahVerseSelector
-              type="start"
-              value={form.start}
-              onChange={(value) => handleSurahVerseChange("start", value)}
-              required
-            />
-            <SurahVerseSelector
-              type="end"
-              value={form.end}
-              onChange={(value) => handleSurahVerseChange("end", value)}
-              required
-            />
-          </div>
-
-          <Label>TA (optional)</Label>
+          {!isArabic && (
+            <div className="grid grid-cols-2 gap-4 max-w-[80%]">
+              <SurahVerseSelector
+                type="start"
+                value={form.start}
+                onChange={(value) => handleSurahVerseChange("start", value)}
+                required
+              />
+              <SurahVerseSelector
+                type="end"
+                value={form.end}
+                onChange={(value) => handleSurahVerseChange("end", value)}
+                required
+              />
+            </div>
+          )}
+          {/* required teacher field */}
+          <Label>TA (teacher)</Label>
           <select
             name="ta"
             value={form.ta}
             onChange={handleChange}
             className="border p-2 rounded max-w-[80%]"
+            required
           >
-            <option value="">None</option>
+            <option value="">Select teacher</option>
             {teamMembers.map((user) => (
               <option key={user._id} value={user._id}>
                 {user.name} ({user.email})
@@ -234,26 +289,50 @@ export default function CreateAssignment({
             className="border p-2 rounded max-w-[80%]"
           />
 
-          <div className="grid grid-cols-2 gap-4 max-w-[80%]">
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
-              <Input
-                name="startTime"
-                type="datetime-local"
-                value={form.startTime}
-                onChange={handleChange}
-                required
+          <div className="space-y-3 max-w-[80%]">
+            <label className="flex items-center gap-2 text-sm cursor-pointer w-fit">
+              <input
+                type="checkbox"
+                checked={useNextMeeting}
+                onChange={(e) => handleNextMeetingToggle(e.target.checked)}
+                disabled={!hasMeetingTimes}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
-              <Input
-                name="endTime"
-                type="datetime-local"
-                value={form.endTime}
-                onChange={handleChange}
-                required
-              />
+              <span>Next time</span>
+            </label>
+            {!hasMeetingTimes && (
+              <p className="text-xs text-muted-foreground">
+                Set meeting times in team settings to use Next time.
+              </p>
+            )}
+            {useNextMeeting && form.startTime && (
+              <p className="text-xs text-muted-foreground">
+                Locked to the next meeting after now.
+              </p>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startTime">Start Time</Label>
+                <Input
+                  name="startTime"
+                  type="datetime-local"
+                  value={form.startTime}
+                  onChange={handleChange}
+                  disabled={useNextMeeting}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endTime">End Time</Label>
+                <Input
+                  name="endTime"
+                  type="datetime-local"
+                  value={form.endTime}
+                  onChange={handleChange}
+                  disabled={useNextMeeting}
+                  required
+                />
+              </div>
             </div>
           </div>
 

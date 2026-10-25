@@ -88,6 +88,8 @@ export default function AssignmentCard({
         return `${baseClasses} bg-emerald-100 text-emerald-800 border border-emerald-200`;
       case "Revision":
         return `${baseClasses} bg-orange-100 text-orange-800 border border-orange-200`;
+      case "Arabic":
+        return `${baseClasses} bg-sky-100 text-sky-800 border border-sky-200`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;
     }
@@ -105,7 +107,9 @@ export default function AssignmentCard({
           className="hover:underline"
         >
           <CardTitle>
-            {assignment.start && assignment.end ? (
+            {assignment.type === "Arabic" ? (
+              "Arabic Assignment"
+            ) : assignment.start && assignment.end ? (
               <div>
                 From Surah {getSurahName(assignment.start.surah)}:{" "}
                 {assignment.start.verse}
@@ -144,7 +148,14 @@ export default function AssignmentCard({
             <strong>Notes:</strong> {assignment.notes}
           </div>
         )}
-
+        {/* teacher name */}
+        {assignment.taName && (
+          <div className="mb-2">
+            <a href={`mailto:${assignment.taEmail}`}>
+              <strong>Teacher:</strong> {assignment.taName}
+            </a>
+          </div>
+        )}
         {/* TA-specific content */}
         {isTA && assignment.student && (
           <div className="mb-2">
@@ -158,7 +169,6 @@ export default function AssignmentCard({
             </a>
           </div>
         )}
-
 
         {/* Student-specific content */}
         {!isTA && assignment.ta && (

@@ -78,8 +78,13 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
     setFormData({
       ...formData,
       type: value,
+      ...(value === "Arabic"
+        ? { start: { surah: 1, verse: 1 }, end: { surah: 1, verse: 1 } }
+        : {}),
     });
   };
+
+  const isArabic = formData.type === "Arabic";
 
   const handleSurahVerseChange = (type, value) => {
     // if the type is start, set end to it as well
@@ -106,14 +111,20 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
       const payload = {
         assignmentId: assignment._id,
         assignedTo: assignment.assignedTo,
-        start: {
-          surah: formData.start.surah,
-          verse: parseInt(formData.start.verse),
-        },
-        end: {
-          surah: formData.end.surah,
-          verse: parseInt(formData.end.verse),
-        },
+        start:
+          formData.type === "Arabic"
+            ? { surah: 1, verse: 1 }
+            : {
+                surah: formData.start.surah,
+                verse: parseInt(formData.start.verse),
+              },
+        end:
+          formData.type === "Arabic"
+            ? { surah: 1, verse: 1 }
+            : {
+                surah: formData.end.surah,
+                verse: parseInt(formData.end.verse),
+              },
         ta: assignment.ta?._id || null,
         status: formData.status,
         notes: formData.notes,
@@ -169,23 +180,26 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
                 <SelectItem value="Memorization">Memorization</SelectItem>
                 <SelectItem value="Recitation">Recitation</SelectItem>
                 <SelectItem value="Revision">Revision</SelectItem>
+                <SelectItem value="Arabic">Arabic</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <SurahVerseSelector 
-              type="start" 
-              value={formData.start} 
-              onChange={(value) => handleSurahVerseChange("start", value)}
-              required
-            />
-            <SurahVerseSelector 
-              type="end" 
-              value={formData.end} 
-              onChange={(value) => handleSurahVerseChange("end", value)}
-              required
-            />
-          </div>
+          {!isArabic && (
+            <div className="grid grid-cols-2 gap-4">
+              <SurahVerseSelector
+                type="start"
+                value={formData.start}
+                onChange={(value) => handleSurahVerseChange("start", value)}
+                required
+              />
+              <SurahVerseSelector
+                type="end"
+                value={formData.end}
+                onChange={(value) => handleSurahVerseChange("end", value)}
+                required
+              />
+            </div>
+          )}
           
           <div className="space-y-2">
             <label htmlFor="status" className="text-sm font-medium">

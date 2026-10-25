@@ -336,6 +336,7 @@ export default function TeamDetail() {
             onOpenChange={setIsCreateAssignmentOpen}
             teamId={params.id}
             teamMembers={teamMembers}
+            meetingTimes={team.meetingTimes ?? []}
             onAssignmentCreated={handleAssignmentCreated}
           />
           <EditTeamSettingsDialog

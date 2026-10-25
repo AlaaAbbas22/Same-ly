@@ -24,6 +24,13 @@ const formatSurahInfo = (surahObj) => {
   }
 };
 
+const formatAssignmentSurahLines = (assignment) => {
+  if (assignment?.type === 'Arabic') return '';
+  return `
+        <li><strong>Start:</strong> ${formatSurahInfo(assignment.start)}</li>
+        <li><strong>End:</strong> ${formatSurahInfo(assignment.end)}</li>`;
+};
+
 // Email templates
 const getAssignmentCreatedTemplate = (assignment, student, team, creator) => {
   return `
@@ -35,9 +42,7 @@ const getAssignmentCreatedTemplate = (assignment, student, team, creator) => {
     <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
       <h3 style="margin-top: 0; color: #444;">Assignment Details:</h3>
       <ul style="list-style-type: none; padding-left: 0;">
-        <li><strong>Type:</strong> ${assignment.type}</li>
-        <li><strong>Start:</strong> ${formatSurahInfo(assignment.start)}</li>
-        <li><strong>End:</strong> ${formatSurahInfo(assignment.end)}</li>
+        <li><strong>Type:</strong> ${assignment.type}</li>${formatAssignmentSurahLines(assignment)}
         <li><strong>Start Time:</strong> ${new Date(assignment.startTime).toLocaleString()}</li>
         <li><strong>End Time:</strong> ${new Date(assignment.endTime).toLocaleString()}</li>
         <li><strong>Status:</strong> ${assignment.status}</li>
@@ -72,9 +77,7 @@ const getAssignmentUpdatedTemplate = (assignment, student, team, updater) => {
     <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
       <h3 style="margin-top: 0; color: #444;">Updated Assignment Details:</h3>
       <ul style="list-style-type: none; padding-left: 0;">
-        <li><strong>Type:</strong> ${assignment.type}</li>
-        <li><strong>Start:</strong> ${formatSurahInfo(assignment.start)}</li>
-        <li><strong>End:</strong> ${formatSurahInfo(assignment.end)}</li>
+        <li><strong>Type:</strong> ${assignment.type}</li>${formatAssignmentSurahLines(assignment)}
         <li><strong>Start Time:</strong> ${new Date(assignment.startTime).toLocaleString()}</li>
         <li><strong>End Time:</strong> ${new Date(assignment.endTime).toLocaleString()}</li>
         <li><strong>Status:</strong> ${assignment.status}</li>
@@ -143,9 +146,7 @@ const getAssignmentDeletedTemplate = (assignment, student, team, deleter) => {
     <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
       <h3 style="margin-top: 0; color: #444;">Deleted Assignment Details:</h3>
       <ul style="list-style-type: none; padding-left: 0;">
-        <li><strong>Type:</strong> ${assignment.type}</li>
-        <li><strong>Start:</strong> ${formatSurahInfo(assignment.start)}</li>
-        <li><strong>End:</strong> ${formatSurahInfo(assignment.end)}</li>
+        <li><strong>Type:</strong> ${assignment.type}</li>${formatAssignmentSurahLines(assignment)}
       </ul>
     </div>
     
@@ -178,9 +179,7 @@ const getTaAssignmentCreatedTemplate = (assignment, ta, student, team, creator) 
       <h3 style="margin-top: 0; color: #444;">Assignment Details:</h3>
       <ul style="list-style-type: none; padding-left: 0;">
         <li><strong>Student:</strong> ${student.name} (${student.email})</li>
-        <li><strong>Type:</strong> ${assignment.type}</li>
-        <li><strong>Start:</strong> ${formatSurahInfo(assignment.start)}</li>
-        <li><strong>End:</strong> ${formatSurahInfo(assignment.end)}</li>
+        <li><strong>Type:</strong> ${assignment.type}</li>${formatAssignmentSurahLines(assignment)}
         <li><strong>Start Time:</strong> ${new Date(assignment.startTime).toLocaleString()}</li>
         <li><strong>End Time:</strong> ${new Date(assignment.endTime).toLocaleString()}</li>
         <li><strong>Status:</strong> ${assignment.status}</li>
@@ -216,9 +215,7 @@ const getTaAssignmentUpdatedTemplate = (assignment, ta, student, team, updater) 
       <h3 style="margin-top: 0; color: #444;">Updated Assignment Details:</h3>
       <ul style="list-style-type: none; padding-left: 0;">
         <li><strong>Student:</strong> ${student.name} (${student.email})</li>
-        <li><strong>Type:</strong> ${assignment.type}</li>
-        <li><strong>Start:</strong> ${formatSurahInfo(assignment.start)}</li>
-        <li><strong>End:</strong> ${formatSurahInfo(assignment.end)}</li>
+        <li><strong>Type:</strong> ${assignment.type}</li>${formatAssignmentSurahLines(assignment)}
         <li><strong>Start Time:</strong> ${new Date(assignment.startTime).toLocaleString()}</li>
         <li><strong>End Time:</strong> ${new Date(assignment.endTime).toLocaleString()}</li>
         <li><strong>Status:</strong> ${assignment.status}</li>
@@ -254,9 +251,7 @@ const getTaAssignmentDeletedTemplate = (assignment, ta, student, team, deleter) 
       <h3 style="margin-top: 0; color: #444;">Deleted Assignment Details:</h3>
       <ul style="list-style-type: none; padding-left: 0;">
         <li><strong>Student:</strong> ${student.name} (${student.email})</li>
-        <li><strong>Type:</strong> ${assignment.type}</li>
-        <li><strong>Start:</strong> ${formatSurahInfo(assignment.start)}</li>
-        <li><strong>End:</strong> ${formatSurahInfo(assignment.end)}</li>
+        <li><strong>Type:</strong> ${assignment.type}</li>${formatAssignmentSurahLines(assignment)}
       </ul>
     </div>
     

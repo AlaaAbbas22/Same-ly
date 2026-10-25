@@ -106,6 +106,8 @@ export default function AssignmentDetailPage() {
         return `${baseClasses} bg-emerald-100 text-emerald-800 border border-emerald-200`;
       case "Revision":
         return `${baseClasses} bg-orange-100 text-orange-800 border border-orange-200`;
+      case "Arabic":
+        return `${baseClasses} bg-sky-100 text-sky-800 border border-sky-200`;
       default:
         return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;
     }
@@ -142,21 +144,23 @@ export default function AssignmentDetailPage() {
         <Card className="max-w-3xl mx-auto">
           <CardContent className="p-6">
             <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-semibold mb-4">
-                  Assignment Content
-                </h2>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-lg mb-2">
-                    From Surah {getSurahName(assignment.start.surah)}:{" "}
-                    {assignment.start.verse}
-                  </p>
-                  <p className="text-lg">
-                    To Surah {getSurahName(assignment.end.surah)}:{" "}
-                    {assignment.end.verse}
-                  </p>
+              {assignment.type !== "Arabic" && (
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Assignment Content
+                  </h2>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-lg mb-2">
+                      From Surah {getSurahName(assignment.start.surah)}:{" "}
+                      {assignment.start.verse}
+                    </p>
+                    <p className="text-lg">
+                      To Surah {getSurahName(assignment.end.surah)}:{" "}
+                      {assignment.end.verse}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

@@ -95,11 +95,35 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
-    const { name } = await request.json();
+    const { id } = await params;
+    const { name, meetingTimes } = await request.json();
 
     if (!id || !name) {
       return NextResponse.json({ error: 'Team ID and new name are required' }, { status: 400 });
+    }
+
+    if (meetingTimes !== undefined) {
+      if (!Array.isArray(meetingTimes)) {
+        return NextResponse.json({ error: 'meetingTimes must be an array' }, { status: 400 });
+      }
+
+      for (const slot of meetingTimes) {
+        const dayOfWeek = Number(slot?.dayOfWeek);
+        if (
+          !Number.isInteger(dayOfWeek) ||
+          dayOfWeek < 0 ||
+          dayOfWeek > 6 ||
+          typeof slot?.startTime !== 'string' ||
+          typeof slot?.endTime !== 'string' ||
+          !/^\d{2}:\d{2}$/.test(slot.startTime) ||
+          !/^\d{2}:\d{2}$/.test(slot.endTime) ||
+          slot.endTime <= slot.startTime
+        ) {
+          return NextResponse.json({
+            error: 'Each meeting time needs a day (0-6), startTime, and endTime (HH:MM) with end after start',
+          }, { status: 400 });
+        }
+      }
     }
 
     let objectId;
@@ -126,16 +150,25 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: 'Forbidden: Only editors can update team details' }, { status: 403 });
     }
 
+    const updateFields = { name };
+    if (meetingTimes !== undefined) {
+      updateFields.meetingTimes = meetingTimes.map((slot) => ({
+        dayOfWeek: Number(slot.dayOfWeek),
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      }));
+    }
+
     const result = await db.collection('teams').updateOne(
       { _id: objectId },
-      { $set: { name } }
+      { $set: updateFields }
     );
 
     if (result.matchedCount === 0) {
       return NextResponse.json({ error: 'Team not found or no changes made' }, { status: 404 });
     }
 
-    return NextResponse.json({ message: 'Team name updated successfully' }, { status: 200 });
+    return NextResponse.json({ message: 'Team settings updated successfully' }, { status: 200 });
   } catch (error) {
     console.error('Error updating team details:', error);
     return NextResponse.json({ error: 'Failed to update team details' }, { status: 500 });
