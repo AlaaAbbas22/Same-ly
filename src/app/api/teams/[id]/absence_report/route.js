@@ -81,7 +81,32 @@ export async function GET(request, { params }) {
               $cond: [{ $eq: ['$status', 'absent'] }, 1, 0]
             }
           },
-          totalAssignments: { $sum: 1 }
+          totalAssignments: { $sum: 1 },
+          assignmentDaysSet: {
+            $addToSet: {
+              $dateToString: { format: '%Y-%m-%d', date: '$startTime' }
+            }
+          },
+          attendedDaysSet: {
+            $addToSet: {
+              $cond: [
+                { $or: [
+                  { $eq: ['$status', 'completed'] },
+                  { $eq: ['$status', 'graded'] }
+                ]},
+                { $dateToString: { format: '%Y-%m-%d', date: '$startTime' } },
+                '$$REMOVE'
+              ]
+            }
+          }
+        }},
+        { $project: {
+          _id: 0,
+          attendedAssignments: 1,
+          absentAssignments: 1,
+          totalAssignments: 1,
+          totalAssignmentDays: { $size: '$assignmentDaysSet' },
+          attendedDays: { $size: '$attendedDaysSet' }
         }}
       ]).toArray();
 
@@ -89,6 +114,8 @@ export async function GET(request, { params }) {
         attendedAssignments: 0,
         absentAssignments: 0,
         totalAssignments: 0,
+        totalAssignmentDays: 0,
+        attendedDays: 0,
       };
 
       return {
@@ -98,6 +125,8 @@ export async function GET(request, { params }) {
         attendedAssignments: studentReport.attendedAssignments,
         absentAssignments: studentReport.absentAssignments,
         totalAssignments: studentReport.totalAssignments,
+        totalAssignmentDays: studentReport.totalAssignmentDays,
+        attendedDays: studentReport.attendedDays,
       };
     }));
 

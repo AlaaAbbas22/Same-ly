@@ -104,6 +104,8 @@ export default function AbsenceReportDialog({
       "Attended Assignments",
       "Absent Assignments",
       "Total Assignments",
+      "Assignment Days",
+      "Attended Days",
     ];
     const reportDataCSV = [
       columnNames,
@@ -112,6 +114,8 @@ export default function AbsenceReportDialog({
         studentReport.attendedAssignments,
         studentReport.absentAssignments,
         studentReport.totalAssignments,
+        studentReport.totalAssignmentDays,
+        studentReport.attendedDays,
       ]),
     ];
 
@@ -134,7 +138,7 @@ export default function AbsenceReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Generate Absence Report</DialogTitle>
         </DialogHeader>
@@ -231,6 +235,8 @@ export default function AbsenceReportDialog({
                     <TableHead>Attended Assignments</TableHead>
                     <TableHead>Absent Assignments</TableHead>
                     <TableHead>Total Assignments</TableHead>
+                    <TableHead>Assignment Days</TableHead>
+                    <TableHead>Attended Days</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -240,6 +246,8 @@ export default function AbsenceReportDialog({
                       <TableCell>{studentReport.attendedAssignments}</TableCell>
                       <TableCell>{studentReport.absentAssignments}</TableCell>
                       <TableCell>{studentReport.totalAssignments}</TableCell>
+                      <TableCell>{studentReport.totalAssignmentDays}</TableCell>
+                      <TableCell>{studentReport.attendedDays}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
