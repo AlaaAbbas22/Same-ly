@@ -8,6 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import SurahVerseSelector from "@/components/SurahVerseSelector";
+import {
+  datetimeLocalToDate,
+  datetimeLocalToISO,
+  toDatetimeLocalValue,
+} from "@/lib/datetime";
 
 export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdated }) {
   const [open, setOpen] = useState(false);
@@ -23,8 +28,8 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
     },
     status: assignment.status || "pending",
     notes: assignment.notes || "",
-    startTime: assignment.startTime ? new Date(assignment.startTime).toISOString().slice(0, 16) : "",
-    endTime: assignment.endTime ? new Date(assignment.endTime).toISOString().slice(0, 16) : "",
+    startTime: assignment.startTime ? toDatetimeLocalValue(assignment.startTime) : "",
+    endTime: assignment.endTime ? toDatetimeLocalValue(assignment.endTime) : "",
     type: assignment.type || "Memorization",
   });
   const [dateError, setDateError] = useState("");
@@ -56,10 +61,10 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
 
   const validateDates = (start, end) => {
     if (start && end) {
-      const startDate = new Date(start);
-      const endDate = new Date(end);
-      
-      if (endDate <= startDate) {
+      const startDate = datetimeLocalToDate(start);
+      const endDate = datetimeLocalToDate(end);
+
+      if (!startDate || !endDate || endDate <= startDate) {
         setDateError("End time must be after start time");
       } else {
         setDateError("");
@@ -128,8 +133,8 @@ export default function UpdateAssignment({ assignment, teamId, onAssignmentUpdat
         ta: assignment.ta?._id || null,
         status: formData.status,
         notes: formData.notes,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
+        startTime: datetimeLocalToISO(formData.startTime),
+        endTime: datetimeLocalToISO(formData.endTime),
         type: formData.type,
       };
 

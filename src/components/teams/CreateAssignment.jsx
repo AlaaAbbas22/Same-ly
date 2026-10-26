@@ -26,6 +26,7 @@ import {
   getNextMeetingOccurrence,
   toDatetimeLocalValue,
 } from "@/lib/meetingTimes";
+import { datetimeLocalToDate, datetimeLocalToISO } from "@/lib/datetime";
 
 export default function CreateAssignment({
   open,
@@ -118,10 +119,10 @@ export default function CreateAssignment({
 
   const validateDates = (start, end) => {
     if (start && end) {
-      const startDate = new Date(start);
-      const endDate = new Date(end);
+      const startDate = datetimeLocalToDate(start);
+      const endDate = datetimeLocalToDate(end);
 
-      if (endDate <= startDate) {
+      if (!startDate || !endDate || endDate <= startDate) {
         setDateError("End time must be after start time");
       } else {
         setDateError("");
@@ -191,8 +192,8 @@ export default function CreateAssignment({
           status: form.status,
           grade: form.grade ? Number(form.grade) : undefined,
           notes: form.notes,
-          startTime: form.startTime,
-          endTime: form.endTime,
+          startTime: datetimeLocalToISO(form.startTime),
+          endTime: datetimeLocalToISO(form.endTime),
           type: form.type,
         }),
       });

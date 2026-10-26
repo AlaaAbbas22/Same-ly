@@ -7,6 +7,7 @@ import GradeAssignment from "@/components/GradeAssignment";
 import UpdateAssignment from "@/components/UpdateAssignment";
 import DeleteAssignment from "@/components/DeleteAssignment";
 import Link from "next/link";
+import { formatLocalDateTime } from "@/lib/datetime";
 
 export default function AssignmentCard({
   assignment,
@@ -181,15 +182,11 @@ export default function AssignmentCard({
 
         <div className="mb-2">
           <strong>Start Time:</strong>{" "}
-          {assignment.startTime
-            ? new Date(assignment.startTime).toLocaleString()
-            : "-"}
+          {formatLocalDateTime(assignment.startTime)}
         </div>
         <div className={isTA ? "mb-4" : ""}>
           <strong>End Time:</strong>{" "}
-          {assignment.endTime
-            ? new Date(assignment.endTime).toLocaleString()
-            : "-"}
+          {formatLocalDateTime(assignment.endTime)}
         </div>
 
         <div className="mt-2">

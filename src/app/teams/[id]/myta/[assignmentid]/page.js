@@ -9,6 +9,7 @@ import LoginButton from "@/components/LoginButton";
 import GradeAssignment from "@/components/GradeAssignment";
 import UpdateAssignment from "@/components/UpdateAssignment";
 import DeleteAssignment from "@/components/DeleteAssignment";
+import { formatLocalDateTime } from "@/lib/datetime";
 
 export default function TAAssignmentDetailPage() {
   const { data: session, status } = useSession();
@@ -205,15 +206,11 @@ export default function TAAssignmentDetailPage() {
                   <h3 className="text-md font-medium mb-2">Timeline</h3>
                   <p>
                     <span className="font-medium">Start:</span>{" "}
-                    {assignment.startTime
-                      ? new Date(assignment.startTime).toLocaleString()
-                      : "-"}
+                    {formatLocalDateTime(assignment.startTime)}
                   </p>
                   <p>
                     <span className="font-medium">End:</span>{" "}
-                    {assignment.endTime
-                      ? new Date(assignment.endTime).toLocaleString()
-                      : "-"}
+                    {formatLocalDateTime(assignment.endTime)}
                   </p>
                 </div>
               </div>

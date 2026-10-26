@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AssignmentCard from "@/components/AssignmentCard";
 import LoginButton from "@/components/LoginButton";
+import { isSameLocalDay } from "@/lib/datetime";
 
 export default function MyTAAssignmentsPage() {
   const { data: session, status } = useSession();
@@ -18,6 +19,7 @@ export default function MyTAAssignmentsPage() {
   const [error, setError] = useState("");
   const [searchTA, setSearchTA] = useState("");
   const [searchStudent, setSearchStudent] = useState("");
+  const [showTodayOnly, setShowTodayOnly] = useState(false);
 
   useEffect(() => {
     if (session) fetchAssignments();
@@ -52,6 +54,18 @@ export default function MyTAAssignmentsPage() {
   if (!session) {
     return <LoginButton />;
   }
+
+  const filteredAssignments = assignments.filter((assignment) => {
+    const matchesTA = (assignment.taName || "")
+      .toLowerCase()
+      .includes(searchTA.toLowerCase());
+    const matchesStudent = (assignment.student?.name || "")
+      .toLowerCase()
+      .includes(searchStudent.toLowerCase());
+    const matchesToday =
+      !showTodayOnly || isSameLocalDay(assignment.startTime);
+    return matchesTA && matchesStudent && matchesToday;
+  });
 
   return (
     <div className="p-8">
@@ -106,6 +120,14 @@ export default function MyTAAssignmentsPage() {
             </option>
           ))}
         </datalist>
+        <label className="flex items-center gap-2 text-sm whitespace-nowrap cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showTodayOnly}
+            onChange={(e) => setShowTodayOnly(e.target.checked)}
+          />
+          Today only
+        </label>
       </div>
       {assignments.length === 0 ? (
         <div className="text-center p-8 border rounded-lg">
@@ -114,28 +136,27 @@ export default function MyTAAssignmentsPage() {
             You are not assigned as a TA for any assignments in this team.
           </p>
         </div>
+      ) : filteredAssignments.length === 0 ? (
+        <div className="text-center p-8 border rounded-lg">
+          <h3 className="text-lg font-medium">No matching assignments</h3>
+          <p className="text-muted-foreground mt-2">
+            {showTodayOnly
+              ? "No assignments start today in your local timezone."
+              : "Try adjusting your search."}
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {assignments
-            .filter(
-              (assignment) =>
-                (assignment.taName || "")
-                  .toLowerCase()
-                  .includes(searchTA.toLowerCase()) &&
-                (assignment.student?.name || "")
-                  .toLowerCase()
-                  .includes(searchStudent.toLowerCase()),
-            )
-            .map((assignment) => (
-              <AssignmentCard
-                key={assignment._id}
-                assignment={assignment}
-                teamId={params.id}
-                isTA={true}
-                onGradeUpdated={fetchAssignments}
-                onAssignmentUpdated={fetchAssignments}
-              />
-            ))}
+          {filteredAssignments.map((assignment) => (
+            <AssignmentCard
+              key={assignment._id}
+              assignment={assignment}
+              teamId={params.id}
+              isTA={true}
+              onGradeUpdated={fetchAssignments}
+              onAssignmentUpdated={fetchAssignments}
+            />
+          ))}
         </div>
       )}
     </div>

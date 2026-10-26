@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import LoginButton from "@/components/LoginButton";
+import { formatLocalDateTime } from "@/lib/datetime";
 
 export default function AssignmentDetailPage() {
   const { data: session, status } = useSession();
@@ -194,15 +195,11 @@ export default function AssignmentDetailPage() {
                   <h3 className="text-md font-medium mb-2">Timeline</h3>
                   <p>
                     <span className="font-medium">Start:</span>{" "}
-                    {assignment.startTime
-                      ? new Date(assignment.startTime).toLocaleString()
-                      : "-"}
+                    {formatLocalDateTime(assignment.startTime)}
                   </p>
                   <p>
                     <span className="font-medium">End:</span>{" "}
-                    {assignment.endTime
-                      ? new Date(assignment.endTime).toLocaleString()
-                      : "-"}
+                    {formatLocalDateTime(assignment.endTime)}
                   </p>
                 </div>
               </div>

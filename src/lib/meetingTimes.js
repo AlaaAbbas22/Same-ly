@@ -1,3 +1,7 @@
+import { toDatetimeLocalValue } from "@/lib/datetime";
+
+export { toDatetimeLocalValue };
+
 export const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },
   { value: 1, label: "Monday" },
@@ -7,14 +11,6 @@ export const DAYS_OF_WEEK = [
   { value: 5, label: "Friday" },
   { value: 6, label: "Saturday" },
 ];
-
-/**
- * Format a Date for <input type="datetime-local" />
- */
-export function toDatetimeLocalValue(date) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
 
 /**
  * Returns the next meeting occurrence that starts after `now`.
