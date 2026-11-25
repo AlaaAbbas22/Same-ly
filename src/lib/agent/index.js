@@ -5,6 +5,10 @@ import {
   sendAssignmentCreatedEmail,
   sendTaAssignmentCreatedEmail,
   sendAssignmentGradedEmail,
+  sendAssignmentUpdatedEmail,
+  sendTaAssignmentUpdatedEmail,
+  sendAssignmentDeletedEmail,
+  sendTaAssignmentDeletedEmail,
 } from "../email";
 
 const ai = new GoogleGenAI({
@@ -245,6 +249,382 @@ async function gradeAssignment(args) {
   return { success: true, assignment };
 }
 
+async function updateAssignment(args) {
+  const {
+    assignmentId,
+    teamId,
+    assignedTo,
+    start,
+    end,
+    ta,
+    status,
+    notes,
+    startTime,
+    endTime,
+    type,
+    updatedBy,
+  } = args;
+
+  if (!assignmentId) return { error: "assignmentId is required" };
+
+  const client = await clientPromise;
+  const db = client.db();
+
+  const assignment = await db
+    .collection("assignments")
+    .findOne({ _id: new ObjectId(assignmentId) });
+  if (!assignment) return { error: "Assignment not found" };
+
+  const resolvedTeamId = teamId || assignment.teamId;
+  const team = await db
+    .collection("teams")
+    .findOne({ _id: new ObjectId(resolvedTeamId) });
+  if (!team) return { error: "Team not found" };
+
+  const parseTime = (timeStr) => {
+    if (!timeStr) return null;
+    return new Date(timeStr);
+  };
+
+  const updateData = { updatedAt: new Date() };
+
+  if (assignedTo) updateData.assignedTo = new ObjectId(assignedTo);
+  if (start) updateData.start = start;
+  if (end) updateData.end = end;
+  if (status) updateData.status = status;
+  if (notes !== undefined) updateData.notes = notes;
+  if (startTime) updateData.startTime = parseTime(startTime);
+  if (endTime) updateData.endTime = parseTime(endTime);
+  if (type) {
+    updateData.type = type;
+    if (type === "Arabic") {
+      if (!start) updateData.start = { surah: 1, verse: 1 };
+      if (!end) updateData.end = { surah: 1, verse: 1 };
+    }
+  }
+
+  const taProvided = ta !== undefined;
+  if (taProvided) {
+    updateData.ta = ta ? new ObjectId(ta) : null;
+  }
+
+  const nextStart = updateData.startTime || assignment.startTime;
+  const nextEnd = updateData.endTime || assignment.endTime;
+  if (nextStart && nextEnd && new Date(nextEnd) <= new Date(nextStart)) {
+    return { error: "End time must be after start time" };
+  }
+
+  await db
+    .collection("assignments")
+    .updateOne({ _id: new ObjectId(assignmentId) }, { $set: updateData });
+
+  const newTaId = taProvided
+    ? updateData.ta
+    : assignment.ta;
+  const oldTaId = assignment.ta?.toString() || null;
+  const nextTaId = newTaId?.toString() || null;
+
+  if (oldTaId !== nextTaId) {
+    if (assignment.ta) {
+      await db.collection("users").updateOne(
+        { _id: assignment.ta },
+        { $pull: { taAssignments: new ObjectId(assignmentId) } },
+      );
+    }
+    if (newTaId) {
+      await db.collection("users").updateOne(
+        { _id: newTaId },
+        { $addToSet: { taAssignments: new ObjectId(assignmentId) } },
+      );
+    }
+  }
+
+  const nextAssignedTo = updateData.assignedTo || assignment.assignedTo;
+  if (assignment.assignedTo.toString() !== nextAssignedTo.toString()) {
+    await db.collection("users").updateOne(
+      { _id: assignment.assignedTo },
+      { $pull: { assignments: new ObjectId(assignmentId) } },
+    );
+    await db.collection("users").updateOne(
+      { _id: nextAssignedTo },
+      { $addToSet: { assignments: new ObjectId(assignmentId) } },
+    );
+  }
+
+  const updatedAssignment = { ...assignment, ...updateData };
+
+  try {
+    const student = await db
+      .collection("users")
+      .findOne({ _id: new ObjectId(nextAssignedTo) });
+    const updater = await db.collection("users").findOne({
+      _id: new ObjectId(updatedBy || team.editors[0]),
+    });
+
+    if (student && student.email && updater) {
+      await sendAssignmentUpdatedEmail(
+        updatedAssignment,
+        student,
+        team,
+        updater,
+      );
+    }
+
+    if (newTaId) {
+      const taUser = await db.collection("users").findOne({ _id: newTaId });
+      if (taUser && taUser.email && updater) {
+        await sendTaAssignmentUpdatedEmail(
+          updatedAssignment,
+          taUser,
+          student,
+          team,
+          updater,
+        );
+      }
+    }
+  } catch (e) {
+    console.error("Failed to send update notification emails:", e);
+  }
+
+  return { success: true, assignment: updatedAssignment };
+}
+
+async function deleteAssignment(args) {
+  const { assignmentId, teamId, deletedBy } = args;
+
+  if (!assignmentId) return { error: "assignmentId is required" };
+
+  const client = await clientPromise;
+  const db = client.db();
+
+  const assignment = await db
+    .collection("assignments")
+    .findOne({ _id: new ObjectId(assignmentId) });
+  if (!assignment) return { error: "Assignment not found" };
+
+  const resolvedTeamId = teamId || assignment.teamId;
+  const team = await db
+    .collection("teams")
+    .findOne({ _id: new ObjectId(resolvedTeamId) });
+  if (!team) return { error: "Team not found" };
+
+  try {
+    const student = await db
+      .collection("users")
+      .findOne({ _id: assignment.assignedTo });
+    const deleter = await db.collection("users").findOne({
+      _id: new ObjectId(deletedBy || team.editors[0]),
+    });
+
+    if (student && student.email && deleter) {
+      await sendAssignmentDeletedEmail(assignment, student, team, deleter);
+    }
+
+    if (assignment.ta) {
+      const taUser = await db
+        .collection("users")
+        .findOne({ _id: assignment.ta });
+      if (taUser && taUser.email && deleter) {
+        await sendTaAssignmentDeletedEmail(
+          assignment,
+          taUser,
+          student,
+          team,
+          deleter,
+        );
+      }
+    }
+  } catch (e) {
+    console.error("Failed to send deletion notification emails:", e);
+  }
+
+  await db
+    .collection("assignments")
+    .deleteOne({ _id: new ObjectId(assignmentId) });
+
+  await db.collection("teams").updateOne(
+    { _id: new ObjectId(resolvedTeamId) },
+    { $pull: { assignments: new ObjectId(assignmentId) } },
+  );
+
+  await db.collection("users").updateOne(
+    { _id: assignment.assignedTo },
+    { $pull: { assignments: new ObjectId(assignmentId) } },
+  );
+
+  if (assignment.ta) {
+    await db.collection("users").updateOne(
+      { _id: assignment.ta },
+      { $pull: { taAssignments: new ObjectId(assignmentId) } },
+    );
+  }
+
+  return { success: true, assignmentId };
+}
+
+async function getAssignmentStats(args) {
+  const {
+    teamId,
+    groupBy = "student",
+    startDate,
+    endDate,
+    status,
+    type,
+    assignedTo,
+    ta,
+    sortBy = "total",
+    sortOrder = "desc",
+    limit = 20,
+  } = args;
+
+  if (!teamId) return { error: "teamId is required" };
+
+  const client = await clientPromise;
+  const db = client.db();
+
+  const team = await db
+    .collection("teams")
+    .findOne({ _id: new ObjectId(teamId) });
+  if (!team) return { error: "Team not found" };
+
+  const groupField = groupBy === "ta" ? "ta" : "assignedTo";
+  const query = { teamId: new ObjectId(teamId) };
+
+  if (assignedTo) query.assignedTo = new ObjectId(assignedTo);
+  if (ta) query.ta = new ObjectId(ta);
+  if (status) query.status = status;
+  if (type) query.type = type;
+
+  if (startDate || endDate) {
+    query.startTime = {};
+    if (startDate) query.startTime.$gte = new Date(startDate + "T00:00:00");
+    if (endDate) query.startTime.$lte = new Date(endDate + "T23:59:59");
+  }
+
+  const assignments = await db
+    .collection("assignments")
+    .find(query)
+    .project({
+      assignedTo: 1,
+      ta: 1,
+      status: 1,
+      type: 1,
+      grade: 1,
+      startTime: 1,
+    })
+    .toArray();
+
+  const statsByUser = new Map();
+
+  const ensureUser = (userId) => {
+    const key = userId.toString();
+    if (!statsByUser.has(key)) {
+      statsByUser.set(key, {
+        userId: key,
+        total: 0,
+        gradedCount: 0,
+        gradeCount: 0,
+        gradeSum: 0,
+        byStatus: {},
+        byType: {},
+      });
+    }
+    return statsByUser.get(key);
+  };
+
+  const rosterIds =
+    groupField === "ta" ? team.editors || [] : team.students || [];
+  for (const id of rosterIds) {
+    if (id) ensureUser(id);
+  }
+
+  for (const assignment of assignments) {
+    const groupId = assignment[groupField];
+    if (!groupId) continue;
+
+    const entry = ensureUser(groupId);
+    entry.total += 1;
+
+    const assignmentStatus = assignment.status || "unknown";
+    entry.byStatus[assignmentStatus] =
+      (entry.byStatus[assignmentStatus] || 0) + 1;
+
+    const assignmentType = assignment.type || "Memorization";
+    entry.byType[assignmentType] = (entry.byType[assignmentType] || 0) + 1;
+
+    const hasGrade =
+      assignment.grade !== undefined && assignment.grade !== null;
+    if (assignmentStatus === "graded") entry.gradedCount += 1;
+    if (hasGrade && assignmentStatus === "graded") {
+      entry.gradeCount += 1;
+      entry.gradeSum += Number(assignment.grade);
+    }
+  }
+
+  const userIds = [...statsByUser.keys()].map((id) => new ObjectId(id));
+  const users = userIds.length
+    ? await db
+        .collection("users")
+        .find({ _id: { $in: userIds } })
+        .project({ _id: 1, name: 1, email: 1 })
+        .toArray()
+    : [];
+  const usersById = new Map(users.map((user) => [user._id.toString(), user]));
+
+  const rankings = [...statsByUser.values()].map((entry) => {
+    const user = usersById.get(entry.userId);
+    return {
+      userId: entry.userId,
+      name: user?.name || "Unknown",
+      email: user?.email || null,
+      total: entry.total,
+      gradedCount: entry.gradedCount,
+      averageGrade:
+        entry.gradeCount > 0
+          ? Math.round((entry.gradeSum / entry.gradeCount) * 10) / 10
+          : null,
+      byStatus: entry.byStatus,
+      byType: entry.byType,
+    };
+  });
+
+  const direction = sortOrder === "asc" ? 1 : -1;
+  rankings.sort((a, b) => {
+    const valueA =
+      sortBy === "gradedCount"
+        ? a.gradedCount
+        : sortBy === "averageGrade"
+          ? a.averageGrade ?? -1
+          : a.total;
+    const valueB =
+      sortBy === "gradedCount"
+        ? b.gradedCount
+        : sortBy === "averageGrade"
+          ? b.averageGrade ?? -1
+          : b.total;
+    if (valueA === valueB) return a.name.localeCompare(b.name);
+    return (valueA - valueB) * direction;
+  });
+
+  const maxResults = Math.min(Math.max(Number(limit) || 20, 1), 100);
+
+  return {
+    groupBy: groupField === "ta" ? "ta" : "student",
+    dateRange: {
+      startDate: startDate || null,
+      endDate: endDate || null,
+    },
+    filters: {
+      status: status || null,
+      type: type || null,
+      assignedTo: assignedTo || null,
+      ta: ta || null,
+    },
+    totalAssignments: assignments.length,
+    rankings: rankings.slice(0, maxResults),
+  };
+}
+
 function greetTheWorld(name) {
   console.log("greetTheWorld");
   return `Hello, ${name}! 🌍`;
@@ -446,6 +826,165 @@ const tools = [
           required: ["assignmentId", "grade"],
         },
       },
+      {
+        name: "update_assignment",
+        description:
+          "Update an existing assignment. Only include fields that should change. Search for the assignment first to get its assignmentId.",
+        parameters: {
+          type: "object",
+          properties: {
+            assignmentId: {
+              type: "string",
+              description: "The ID of the assignment to update.",
+            },
+            teamId: {
+              type: "string",
+              description: "The ID of the team.",
+            },
+            assignedTo: {
+              type: "string",
+              description: "The ID of the student being assigned.",
+            },
+            ta: {
+              type: "string",
+              description:
+                "The ID of the teacher/TA. Pass an empty string to remove the TA.",
+            },
+            start: {
+              type: "object",
+              description: "The start point (e.g., {surah: 1, verse: 1}).",
+              properties: {
+                surah: { type: "integer" },
+                verse: { type: "integer" },
+              },
+            },
+            end: {
+              type: "object",
+              description: "The end point (e.g., {surah: 1, verse: 7}).",
+              properties: {
+                surah: { type: "integer" },
+                verse: { type: "integer" },
+              },
+            },
+            status: {
+              type: "string",
+              description:
+                "The assignment status (pending, in-progress, completed, graded, absent).",
+            },
+            notes: {
+              type: "string",
+              description: "Any additional notes.",
+            },
+            startTime: {
+              type: "string",
+              description:
+                'The start time as "YYYY-MM-DDTHH:mm:ss" America/Los_Angeles wall time.',
+            },
+            endTime: {
+              type: "string",
+              description:
+                'The end time as "YYYY-MM-DDTHH:mm:ss" America/Los_Angeles wall time.',
+            },
+            type: {
+              type: "string",
+              enum: ["Memorization", "Revision", "Recitation", "Arabic"],
+              description: "The type of assignment.",
+            },
+            updatedBy: {
+              type: "string",
+              description: "The ID of the teacher making the update.",
+            },
+          },
+          required: ["assignmentId"],
+        },
+      },
+      {
+        name: "delete_assignment",
+        description:
+          "Permanently delete an existing assignment. Search for it first to get the assignmentId.",
+        parameters: {
+          type: "object",
+          properties: {
+            assignmentId: {
+              type: "string",
+              description: "The ID of the assignment to delete.",
+            },
+            teamId: {
+              type: "string",
+              description: "The ID of the team.",
+            },
+            deletedBy: {
+              type: "string",
+              description: "The ID of the teacher deleting the assignment.",
+            },
+          },
+          required: ["assignmentId"],
+        },
+      },
+      {
+        name: "get_assignment_stats",
+        description:
+          "Rank students or teachers by assignment counts and grades. Use this for questions like who has the most assignments, who has the most graded work, or averages over a date range. Do not download every assignment with search_assignments just to count.",
+        parameters: {
+          type: "object",
+          properties: {
+            teamId: {
+              type: "string",
+              description: "The ID of the team.",
+            },
+            groupBy: {
+              type: "string",
+              enum: ["student", "ta"],
+              description:
+                "Rank by student (assignedTo) or by teacher/TA. Default is student.",
+            },
+            startDate: {
+              type: "string",
+              description:
+                "Inclusive start date as YYYY-MM-DD in America/Los_Angeles.",
+            },
+            endDate: {
+              type: "string",
+              description:
+                "Inclusive end date as YYYY-MM-DD in America/Los_Angeles.",
+            },
+            status: {
+              type: "string",
+              description:
+                "Optional status filter, e.g. graded, pending, absent.",
+            },
+            type: {
+              type: "string",
+              enum: ["Memorization", "Revision", "Recitation", "Arabic"],
+              description: "Optional assignment type filter.",
+            },
+            assignedTo: {
+              type: "string",
+              description: "Optional student ID to limit stats to one student.",
+            },
+            ta: {
+              type: "string",
+              description: "Optional teacher/TA ID to limit stats.",
+            },
+            sortBy: {
+              type: "string",
+              enum: ["total", "gradedCount", "averageGrade"],
+              description:
+                "How to rank results. Use gradedCount for most graded assignments. Default is total.",
+            },
+            sortOrder: {
+              type: "string",
+              enum: ["desc", "asc"],
+              description: "Default is desc (highest first).",
+            },
+            limit: {
+              type: "integer",
+              description: "How many people to return (1-100, default 20).",
+            },
+          },
+          required: ["teamId"],
+        },
+      },
     ],
   },
 ];
@@ -458,6 +997,9 @@ const availableFunctions = {
   create_assignment: (args) => createAssignment(args),
   search_assignments: (args) => searchAssignments(args),
   grade_assignment: (args) => gradeAssignment(args),
+  update_assignment: (args) => updateAssignment(args),
+  delete_assignment: (args) => deleteAssignment(args),
+  get_assignment_stats: (args) => getAssignmentStats(args),
 };
 
 const model = "gemini-3.1-flash-lite";
@@ -512,7 +1054,26 @@ When a user wants to create an assignment:
    - Use grade_assignment.
    - You need the assignmentId (get this from search_assignments).
    - The grade should be a number (percentage).
-7. When you have all the info, use the appropriate tool.
+7. When updating an assignment:
+   - Use search_assignments (and search_users if needed) to find the exact assignment first.
+   - If multiple assignments match, pick the most specific match using student, date, type, and verses. If still ambiguous, ask the user which one.
+   - Then call update_assignment with the assignmentId and ONLY the fields that should change.
+   - If changing the student or TA, look up their IDs with search_users first.
+   - If changing times, use the same "YYYY-MM-DDTHH:mm:ss" America/Los_Angeles wall time format as create_assignment. Never append "Z" or a timezone offset.
+   - If changing to type "Arabic" without new verses, start and end default to { "surah": 1, "verse": 1 }.
+8. When deleting an assignment:
+   - Use search_assignments to find the exact assignment first.
+   - If multiple assignments match, pick the most specific match or ask the user.
+   - Then call delete_assignment with that assignmentId.
+   - Confirm what was deleted after success.
+9. When answering stats questions (most/least assignments, graded counts, averages, leaderboards):
+   - Use get_assignment_stats. Do not pull every assignment with search_assignments just to count.
+   - Dates are YYYY-MM-DD in America/Los_Angeles. Resolve relative ranges like "this week" or "last month" from the current reference time.
+   - groupBy "student" for student rankings, "ta" for teacher rankings.
+   - For "most graded assignments", set sortBy to "gradedCount" (or status "graded" with sortBy "total").
+   - For a date range, set both startDate and endDate.
+   - Reply with a short ranked list of names and counts, and mention the date range and filters used.
+10. When you have all the info, use the appropriate tool.
 `;
 
     // Keep track of the entire conversation for this request
