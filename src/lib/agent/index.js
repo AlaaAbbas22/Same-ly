@@ -1,10 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import { 
-  sendAssignmentCreatedEmail, 
+import {
+  sendAssignmentCreatedEmail,
   sendTaAssignmentCreatedEmail,
-  sendAssignmentGradedEmail
+  sendAssignmentGradedEmail,
 } from "../email";
 
 const ai = new GoogleGenAI({
@@ -19,7 +19,9 @@ async function searchUsers(teamId, query, role = "both") {
   const client = await clientPromise;
   const db = client.db();
 
-  const team = await db.collection("teams").findOne({ _id: new ObjectId(teamId) });
+  const team = await db
+    .collection("teams")
+    .findOne({ _id: new ObjectId(teamId) });
   if (!team) return { error: "Team not found" };
 
   let userIds = [];
@@ -48,7 +50,9 @@ async function getTeamMeetingTimes(teamId) {
   const client = await clientPromise;
   const db = client.db();
 
-  const team = await db.collection("teams").findOne({ _id: new ObjectId(teamId) });
+  const team = await db
+    .collection("teams")
+    .findOne({ _id: new ObjectId(teamId) });
   if (!team) return { error: "Team not found" };
 
   return team.meetingTimes || [];
@@ -72,7 +76,9 @@ async function createAssignment(args) {
   const client = await clientPromise;
   const db = client.db();
 
-  const team = await db.collection("teams").findOne({ _id: new ObjectId(teamId) });
+  const team = await db
+    .collection("teams")
+    .findOne({ _id: new ObjectId(teamId) });
   if (!team) return { error: "Team not found" };
 
   // If createdBy is not provided, use the first editor as a fallback
@@ -83,7 +89,7 @@ async function createAssignment(args) {
     if (!timeStr) return null;
     // If the user provided a timezone, respect it.
     // Otherwise, construct a Date object from the wall time string.
-    // In this environment (America/Los_Angeles), new Date("YYYY-MM-DDTHH:mm:ss") 
+    // In this environment (America/Los_Angeles), new Date("YYYY-MM-DDTHH:mm:ss")
     // will correctly interpret it as local wall time.
     return new Date(timeStr);
   };
@@ -111,19 +117,22 @@ async function createAssignment(args) {
   // Update references
   await db
     .collection("teams")
-    .updateOne({ _id: new ObjectId(teamId) }, { $push: { assignments: assignmentId } });
+    .updateOne(
+      { _id: new ObjectId(teamId) },
+      { $push: { assignments: assignmentId } },
+    );
   await db
     .collection("users")
     .updateOne(
       { _id: new ObjectId(assignedTo) },
-      { $push: { assignments: assignmentId } }
+      { $push: { assignments: assignmentId } },
     );
   if (ta) {
     await db
       .collection("users")
       .updateOne(
         { _id: new ObjectId(ta) },
-        { $push: { taAssignments: assignmentId } }
+        { $push: { taAssignments: assignmentId } },
       );
   }
 
@@ -140,7 +149,7 @@ async function createAssignment(args) {
         { ...assignment, _id: assignmentId },
         student,
         team,
-        creator
+        creator,
       );
     }
     if (ta) {
@@ -153,7 +162,7 @@ async function createAssignment(args) {
           taUser,
           student,
           team,
-          creator
+          creator,
         );
       }
     }
@@ -203,11 +212,13 @@ async function gradeAssignment(args) {
     gradedAt: new Date(),
   };
 
-  const result = await db.collection("assignments").findOneAndUpdate(
-    { _id: new ObjectId(assignmentId) },
-    { $set: updateData },
-    { returnDocument: "after" }
-  );
+  const result = await db
+    .collection("assignments")
+    .findOneAndUpdate(
+      { _id: new ObjectId(assignmentId) },
+      { $set: updateData },
+      { returnDocument: "after" },
+    );
 
   const assignment = result.value || result;
   if (!assignment) return { error: "Assignment not found" };
@@ -220,11 +231,9 @@ async function gradeAssignment(args) {
     const student = await db
       .collection("users")
       .findOne({ _id: new ObjectId(assignment.assignedTo) });
-    const grader = await db
-      .collection("users")
-      .findOne({
-        _id: new ObjectId(gradedBy || team.editors[0]),
-      });
+    const grader = await db.collection("users").findOne({
+      _id: new ObjectId(gradedBy || team.editors[0]),
+    });
 
     if (student && student.email && team && grader) {
       await sendAssignmentGradedEmail(assignment, student, team, grader);
@@ -390,7 +399,8 @@ const tools = [
             },
             date: {
               type: "string",
-              description: "The ISO date string to search for assignments (e.g., '2023-10-27').",
+              description:
+                "The ISO date string to search for assignments (e.g., '2023-10-27').",
             },
             type: {
               type: "string",
@@ -457,13 +467,26 @@ const MAX_TOOL_ROUNDS = 16;
 // 3. THE AGENT LOOP
 // ==========================================
 
-export async function runAgent(message, onProgress = async () => {}) {
+export async function runAgent(
+  message,
+  onProgress = async () => {},
+  username = null,
+) {
+  const knownUsers = {
+    AlaaOraby22: "Alaa Abbas",
+    abdelrahman_MH: "Abdelrahman Helal",
+    amran510: "Amran Alsaidy",
+    Aadani7: "Abdulelah",
+  };
+  const teacherName = knownUsers[username] || username || "Unknown User";
+
   try {
     const systemInstruction = `
 You are a Telegram agent for Samely, an app for managing Quran memorization assignments.
 The default team ID is 6ab47ec9285ceb4eb644a9fb.
 
 When a user wants to create an assignment:
+0. The teacher's name is "${teacherName}". Create the assignments with them as the teacher if they don't mention another teacher.
 1. Search for the student and teacher (TA) by name or email using search_users if you don't have their IDs.
 2. Continuity: If you just graded an assignment and are now creating a new one for the same student, you MUST assign the same teacher (TA) who was on the graded assignment to the new one.
 3. Date Resolution: If the user says a relative date like "next Monday", "tomorrow", or "next time":
@@ -471,7 +494,7 @@ When a user wants to create an assignment:
    - The meeting times (startTime/endTime) returned by get_team_meeting_times are in "HH:mm" format in America/Los_Angeles time.
    - "Next time" means the very next available meeting slot from the schedule that is strictly in the future (after the current moment).
    - dayOfWeek: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday.
-   - Current reference time: ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} (Local Time).
+   - Current reference time: ${new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })} (Local Time).
    - IMPORTANT: When providing startTime and endTime to create_assignment, use the format "YYYY-MM-DDTHH:mm:ss" (e.g., "2026-11-02T18:30:00"). 
    - NEVER append "Z" or any timezone offset like "+00:00" or "-08:00". 
    - The system is configured to treat your input as "America/Los_Angeles" wall time automatically. If you add "Z", it will be shifted by 8 hours and appear at the wrong time (e.g., 10:30 AM).

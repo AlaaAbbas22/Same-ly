@@ -6,16 +6,6 @@ export const maxDuration = 60;
 
 bot.on("message:text", async (ctx) => {
 
-  const allowedUsernames = [
-    "AlaaOraby22",
-    "abdelrahman_MH",
-    "amran510"
-  ]
-  if (!allowedUsernames.includes(ctx.from.username)) {
-    await ctx.reply("You are not authorized to use this bot.");
-    return;
-  }
-
   await ctx.replyWithChatAction("typing");
   const progressMessage = await ctx.reply(
     "🤔 Understanding your request..."
@@ -35,7 +25,7 @@ bot.on("message:text", async (ctx) => {
       }
     };
 
-    const response = await runAgent(ctx.message.text, updateProgress);
+    const response = await runAgent(ctx.message.text, updateProgress, ctx.from.username);
     await updateProgress(`✅ Done!\n\n${response}`);
   } catch (error) {
     console.error(error);
